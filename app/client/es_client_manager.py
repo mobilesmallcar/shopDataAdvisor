@@ -30,89 +30,91 @@ if __name__ == '__main__':
 
     async def test():
         client = es_client_manager.client
-
+        resp = await client.indices.delete(
+            index="my-books",
+        )
         # 1. 创建索引
-        # resp = await client.indices.create(
-        #     index="my-books",
-        #     mappings={
-        #         "dynamic": False,
-        #         "properties": {
-        #             "name": {
-        #                 "type": "text"
-        #             },
-        #             "author": {
-        #                 "type": "text"
-        #             },
-        #             "release_date": {
-        #                 "type": "date",
-        #                 "format": "yyyy-MM-dd"
-        #             },
-        #             "page_count": {
-        #                 "type": "integer"
-        #             }
-        #         }
-        #     },
-        # )
-        # # 2. 批量创建数据
-        # resp = await client.bulk(
-        #     operations=[
-        #         {
-        #             "index": {
-        #                 "_index": "my-books"
-        #             }
-        #         },
-        #         {
-        #             "name": "Revelation Space",
-        #             "author": "Alastair Reynolds",
-        #             "release_date": "2000-03-15",
-        #             "page_count": 585
-        #         },
-        #         {
-        #             "index": {
-        #                 "_index": "my-books"
-        #             }
-        #         },
-        #         {
-        #             "name": "1984",
-        #             "author": "George Orwell",
-        #             "release_date": "1985-06-01",
-        #             "page_count": 328
-        #         },
-        #         {
-        #             "index": {
-        #                 "_index": "my-books"
-        #             }
-        #         },
-        #         {
-        #             "name": "Fahrenheit 451",
-        #             "author": "Ray Bradbury",
-        #             "release_date": "1953-10-15",
-        #             "page_count": 227
-        #         },
-        #         {
-        #             "index": {
-        #                 "_index": "my-books"
-        #             }
-        #         },
-        #         {
-        #             "name": "Brave New World",
-        #             "author": "Aldous Huxley",
-        #             "release_date": "1932-06-01",
-        #             "page_count": 268
-        #         },
-        #         {
-        #             "index": {
-        #                 "_index": "my-books"
-        #             }
-        #         },
-        #         {
-        #             "name": "The Handmaids Tale",
-        #             "author": "Margaret Atwood",
-        #             "release_date": "1985-06-01",
-        #             "page_count": 311
-        #         }
-        #     ],
-        # )
+        resp = await client.indices.create(
+            index="my-books",
+            mappings={
+                "dynamic": False,
+                "properties": {
+                    "name": {
+                        "type": "text"
+                    },
+                    "author": {
+                        "type": "text"
+                    },
+                    "release_date": {
+                        "type": "date",
+                        "format": "yyyy-MM-dd"
+                    },
+                    "page_count": {
+                        "type": "integer"
+                    }
+                }
+            },
+        )
+        # 2. 批量创建数据
+        resp = await client.bulk(
+            operations=[
+                {
+                    "index": {
+                        "_index": "my-books"
+                    }
+                },
+                {
+                    "name": "Revelation Space",
+                    "author": "Alastair Reynolds",
+                    "release_date": "2000-03-15",
+                    "page_count": 585
+                },
+                {
+                    "index": {
+                        "_index": "my-books"
+                    }
+                },
+                {
+                    "name": "1984",
+                    "author": "George Orwell",
+                    "release_date": "1985-06-01",
+                    "page_count": 328
+                },
+                {
+                    "index": {
+                        "_index": "my-books"
+                    }
+                },
+                {
+                    "name": "Fahrenheit 451",
+                    "author": "Ray Bradbury",
+                    "release_date": "1953-10-15",
+                    "page_count": 227
+                },
+                {
+                    "index": {
+                        "_index": "my-books"
+                    }
+                },
+                {
+                    "name": "Brave New World",
+                    "author": "Aldous Huxley",
+                    "release_date": "1932-06-01",
+                    "page_count": 268
+                },
+                {
+                    "index": {
+                        "_index": "my-books"
+                    }
+                },
+                {
+                    "name": "The Handmaids Tale",
+                    "author": "Margaret Atwood",
+                    "release_date": "1985-06-01",
+                    "page_count": 311
+                }
+            ],
+        )
         # 3. 查询数据
         resp = await client.search(
             index="my-books",

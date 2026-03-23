@@ -30,7 +30,7 @@ class MySQLClientManager:
             bind=self.engine,
             autoflush=False,
             expire_on_commit=False,
-            autobegin=False
+            autobegin=True
         )
 
     async def close(self):
