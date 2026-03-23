@@ -7,7 +7,7 @@ logging:
     retention: "7 days"
   console:
     enable: true
-    level: INFO
+    level: DEBUG
 
 db_meta:
   host: 192.168.10.131

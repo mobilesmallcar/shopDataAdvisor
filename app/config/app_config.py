@@ -74,8 +74,8 @@ class AppConfig:
     llm: LLMConfig
 
 
-config_file = Path(__file__).parents[2] / 'conf' / 'app_config.yaml'
-app_config: AppConfig = load_config(AppConfig, config_file)
+_config_file = Path(__file__).parents[2] / 'conf' / 'app_config.yaml'
+app_config: AppConfig = load_config(AppConfig, _config_file)
 
 if __name__ == '__main__':
     print(app_config.db_meta.port)
