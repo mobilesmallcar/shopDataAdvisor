@@ -1,10 +1,10 @@
 import asyncio
 from typing import Optional
-
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession, AsyncEngine
 
 from app.config.app_config import DBConfig, app_config
+from app.core.base_log import logger
 
 
 class MySQLClientManager:
@@ -14,8 +14,10 @@ class MySQLClientManager:
         self.session_factory = None
 
     def _get_url(self):
-        return (f"mysql+asyncmy://{self.db_config.user}:{self.db_config.password}"
+        addr = (f"mysql+asyncmy://{self.db_config.user}:{self.db_config.password}"
                 f"@{self.db_config.host}:{self.db_config.port}/{self.db_config.database}?charset=utf8mb4")
+        logger.debug(f"[Mysql]初始化地址:{addr}")
+        return addr
 
     def init(self):
         self.engine = create_async_engine(
@@ -27,7 +29,8 @@ class MySQLClientManager:
         self.session_factory = async_sessionmaker(
             bind=self.engine,
             autoflush=False,
-            expire_on_commit=False
+            expire_on_commit=False,
+            autobegin=False
         )
 
     async def close(self):

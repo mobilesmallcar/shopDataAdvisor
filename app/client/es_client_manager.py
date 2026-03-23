@@ -1,8 +1,8 @@
 import asyncio
-
 from elasticsearch import AsyncElasticsearch
 
 from app.config.app_config import ESConfig, app_config
+from app.core.base_log import logger
 
 
 class ESClientManager:
@@ -11,7 +11,9 @@ class ESClientManager:
         self.client: AsyncElasticsearch | None = None
 
     def _get_url(self):
-        return f"http://{self.config.host}:{self.config.port}"
+        addr = f"http://{self.config.host}:{self.config.port}"
+        logger.debug(f"[ElasticSearch]初始化地址:{addr}")
+        return addr
 
     def init(self):
         self.client = AsyncElasticsearch(hosts=[self._get_url()], request_timeout=10000)
@@ -122,5 +124,6 @@ if __name__ == '__main__':
         )
         print(resp)
         await es_client_manager.close()
+
 
     asyncio.run(test())

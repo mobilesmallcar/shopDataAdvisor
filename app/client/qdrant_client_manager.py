@@ -1,9 +1,9 @@
 import asyncio
-
 from qdrant_client import AsyncQdrantClient
-
-from app.config.app_config import QdrantConfig, app_config
 from qdrant_client.http.models import Distance, VectorParams
+
+from app.core.base_log import logger
+from app.config.app_config import QdrantConfig, app_config
 
 
 class QdrantClientManager:
@@ -12,7 +12,9 @@ class QdrantClientManager:
         self.client: AsyncQdrantClient | None = None
 
     def _get_url(self):
-        return f"http://{self.config.host}:{self.config.port}"
+        addr = f"http://{self.config.host}:{self.config.port}"
+        logger.debug(f"[Qdrant]初始化地址:{addr}")
+        return addr
 
     def init(self):
         self.client = AsyncQdrantClient(url=self._get_url())
