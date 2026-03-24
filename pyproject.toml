@@ -4,6 +4,9 @@ version = "0.1.0"
 description = "Add your description here"
 requires-python = ">=3.12,<3.13"
 dependencies = [
+    "torch==2.9.0+cu130",
+    "torchvision==0.24.0+cu130",
+    "sentence-transformers==5.3.0",
     "asyncmy>=0.2.11",
     "cryptography>=46.0.5",
     "elasticsearch[async]==8.19.*",
@@ -11,6 +14,22 @@ dependencies = [
     "langchain-huggingface>=1.2.1",
     "loguru>=0.7.3",
     "omegaconf>=2.3.0",
-    "qdrant-client==1.16.",
+    "qdrant-client==1.16.*",
     "sqlalchemy>=2.0.48",
 ]
+# 显式定义 PyTorch 专用 index
+[[tool.uv.index]]
+name = "pytorch-cu130"
+url = "https://download.pytorch.org/whl/cu130"
+explicit = true
+
+# 强制 torch 和 torchvision 只走上面定义的 index
+[tool.uv.sources]
+torch = { index = "pytorch-cu130" }
+torchvision = { index = "pytorch-cu130" }
+
+[tool.uv]
+required-environments = [
+    'sys_platform == "win32" and platform_machine == "AMD64"'
+]
+#cache-dir = "D:/software/env/

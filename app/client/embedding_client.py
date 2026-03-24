@@ -11,7 +11,7 @@ class EmbeddingClientManager:
 
     def _get_url(self):
         addr = f"http://{self.config.host}:{self.config.port}"
-        addr = "BAAI/bge-large-zh-v1.5"
+        # addr = "BAAI/bge-large-zh-v1.5"
         addr = r"D:\shangguigu\github\A-Crucial-project\shopDataAdvisor\docker\embedding\bge-large-zh-v1.5"
         logger.debug(f"[词嵌入]初始化地址:{addr}")
         return addr
