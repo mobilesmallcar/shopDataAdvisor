@@ -1,0 +1,40 @@
+---
+config:
+  flowchart:
+    curve: linear
+---
+graph TD;
+	__start__([<p>__start__</p>]):::first
+	extract_keywords(extract_keywords)
+	recall_column(recall_column)
+	recall_value(recall_value)
+	recall_metric(recall_metric)
+	merge_retrieved_info(merge_retrieved_info)
+	filter_table_info(filter_table_info)
+	filter_metric_info(filter_metric_info)
+	add_context(add_context)
+	generate_sql(generate_sql)
+	validate_sql(validate_sql)
+	correct_sql(correct_sql)
+	execute_sql(execute_sql)
+	__end__([<p>__end__</p>]):::last
+	__start__ --> extract_keywords;
+	add_context --> generate_sql;
+	correct_sql --> execute_sql;
+	extract_keywords --> recall_column;
+	extract_keywords --> recall_metric;
+	extract_keywords --> recall_value;
+	filter_metric_info --> add_context;
+	filter_table_info --> add_context;
+	generate_sql --> validate_sql;
+	merge_retrieved_info --> filter_metric_info;
+	merge_retrieved_info --> filter_table_info;
+	recall_column --> merge_retrieved_info;
+	recall_metric --> merge_retrieved_info;
+	recall_value --> merge_retrieved_info;
+	validate_sql -. &nbsp;False&nbsp; .-> correct_sql;
+	validate_sql -. &nbsp;True&nbsp; .-> execute_sql;
+	execute_sql --> __end__;
+	classDef default fill:#f2f0ff,line-height:1.2
+	classDef first fill-opacity:0
+	classDef last fill:#bfb6fc
