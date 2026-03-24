@@ -25,20 +25,28 @@ class ValueESRepository:
     def __init__(self, es_client: AsyncElasticsearch):
         self.es_client = es_client
 
-    async def ensure_index(self, delete_flag=True):
+    async def delete_index(self):
+        exists = await self.es_client.indices.exists(index=self.es_index_name)
+        if exists:
+            logger.debug(f"[ElasticSearch]索引[{self.es_index_name}]已删除")
+            await self.es_client.indices.delete(index=self.es_index_name)
+        else:
+            logger.debug(f"[ElasticSearch]索引[{self.es_index_name}]不存在,不执行删除,返回..")
+
+    async def ensure_index(self):
         exists = await self.es_client.indices.exists(index=self.es_index_name)
         # 存在则先删除
-        if exists and delete_flag:
-            logger.debug("[ElasticSearch]索引[data_advisor_v1]已存在，删除重新创建...")
-            await self.es_client.indices.delete(index=self.es_index_name)
+        if not exists:
+            # 创建索引，传入 mapping
+            await self.es_client.indices.create(
+                index=self.es_index_name,
+                mappings=self.es_index_mapping  # 传入你的字段映射
+            )
+            logger.debug(f"[ElasticSearch]索引[{self.es_index_name}]已创建")
+        else:
+            logger.debug(f"[ElasticSearch]索引[{self.es_index_name}]已存在,返回..")
 
-        # 创建索引，传入 mapping
-        await self.es_client.indices.create(
-            index=self.es_index_name,
-            mappings=self.es_index_mapping  # 传入你的字段映射
-        )
-
-    async def batch_index(self, docs: list[ValueInfoES], batch_size: int = 64):
+    async def batch_index(self, docs: list[ValueInfoES], batch_size: int = 10):
         if not docs:
             return
 

@@ -4,6 +4,7 @@ from qdrant_client import AsyncQdrantClient
 from qdrant_client.models import VectorParams, Distance, PointStruct
 
 from app.config.app_config import app_config
+from app.core.base_log import logger
 
 T = TypeVar('T')
 
@@ -14,21 +15,25 @@ class BaseQdrantRepository(Generic[T]):
     def __init__(self, client: AsyncQdrantClient):
         self.client = client
 
-    async def ensure_collection(self, delete_flag=True):
+    async def delete_collection(self):
+        await self.client.delete_collection(self.collection_name)
+        logger.debug(f"[Qdrant]集合[{self.collection_name}]已删除")
+
+    async def ensure_collection(self):
         # 1.判断结合是否存在
         exist = await self.client.collection_exists(self.collection_name)
         # 2.如若不存在,则创建集合
-        if exist and delete_flag:
-            # 删除
-            await self.client.delete_collection(self.collection_name)
-
-        await self.client.create_collection(
-            collection_name=self.collection_name,
-            vectors_config=VectorParams(
-                size=app_config.qdrant.embedding_size,
-                distance=Distance.COSINE
-            ),
-        )
+        if not exist:
+            await self.client.create_collection(
+                collection_name=self.collection_name,
+                vectors_config=VectorParams(
+                    size=app_config.qdrant.embedding_size,
+                    distance=Distance.COSINE
+                ),
+            )
+            logger.debug("[Qdrant]集合[{self.collection_name}]已创建")
+        else:
+            logger.debug("[Qdrant]集合[{self.collection_name}]已存在,返回..")
 
     async def upsert(
             self,
@@ -56,8 +61,7 @@ class BaseQdrantRepository(Generic[T]):
         ]
 
         # 使用 upload_points（官方强烈推荐，比手动循环 upsert 更好）
-        await self.client.upload_points(  # type: ignore[misc]
-
+        self.client.upload_points(  # type: ignore[misc]
             collection_name=self.collection_name,
             points=points,
             batch_size=batch_size,

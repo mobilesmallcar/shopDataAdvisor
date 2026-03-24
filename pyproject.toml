@@ -11,6 +11,6 @@ dependencies = [
     "langchain-huggingface>=1.2.1",
     "loguru>=0.7.3",
     "omegaconf>=2.3.0",
-    "qdrant-client>=1.17.1",
+    "qdrant-client==1.16.",
     "sqlalchemy>=2.0.48",
 ]

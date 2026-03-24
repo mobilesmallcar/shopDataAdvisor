@@ -3,12 +3,17 @@ import uuid
 from sqlalchemy import text
 
 from app.config.config_loader import load_config
-from app.config.meta_config import MetaConfig, TableConfig
+from app.config.meta_config import MetaConfig, TableConfig, MetricConfig
 from app.core.base_log import logger
 from app.models.es.value_info_es import ValueInfoES
 from app.models.mysql.column_info_mysql import ColumnInfoMySQL
+from app.models.mysql.column_metric_mysql import ColumnMetricMySQL
+from app.models.mysql.metric_info_mysql import MetricInfoMySQL
 from app.models.mysql.table_info_mysql import TableInfoMySQL
 from app.models.qdrant.column_info_qdrant import ColumnInfoQdrant
+from app.models.qdrant.metric_info_qdrant import MetricInfoQdrant
+from app.repositories.qdrant.column_qdrant_repository import ColumnQdrantRepository
+from app.repositories.qdrant.metric_qdrant_repository import MetricQdrantRepository
 from app.schemas.meta_client_manager_schemas import MetaClientManger
 
 
@@ -26,7 +31,7 @@ class MetaKnowledgeService:
             table_infos, column_infos = await self._save_tables_to_meta_db(meta_config.tables)
             logger.info('保存表信息和字段信息到meta数据库')
             # 3.同步字段信息到qdrant
-            await self._sync_columns_to_qdrant(column_infos)
+            await self._sync_columns_to_qdrant(column_infos, self.client_manager.column_qdrant_repository)
             logger.info('同步字段信息到qdrant')
             # 4.同步字段数据到es
             await self._sync_values_to_es(table_infos, column_infos, meta_config)
@@ -37,7 +42,7 @@ class MetaKnowledgeService:
             logger.info('保存metric信息到meta数据库')
             #
             # # 6.同步metric信息到qdrant
-            # await self._sync_metrics_to_qdrant(metric_infos)
+            await self._sync_columns_to_qdrant(metric_infos, self.client_manager.metric_qdrant_repository)
             # logger.info('同步metric信息到qdrant')
         logger.info('元数据知识库构建完成')
 
@@ -92,9 +97,13 @@ class MetaKnowledgeService:
         # 3. 返回
         return table_infos, column_infos
 
-    async def _sync_columns_to_qdrant(self, columns: list[ColumnInfoMySQL]):
+    async def _sync_columns_to_qdrant(
+            self,
+            columns: list[ColumnInfoMySQL | MetricInfoMySQL],
+            repository: MetricQdrantRepository | ColumnQdrantRepository
+    ):
         # 1. 创建qdrant collection
-        await self.client_manager.column_qdrant_repository.ensure_collection()
+        await repository.ensure_collection()
 
         # 2. 构建qdrant数据
         ids: list = []
@@ -102,9 +111,16 @@ class MetaKnowledgeService:
         payloads: list[ColumnInfoQdrant] = []
         for column_info in columns:
             # a) 获取payload
-            payload = ColumnInfoQdrant.model_validate(column_info)
+            if isinstance(column_info, ColumnInfoMySQL):
+                payload = ColumnInfoQdrant.model_validate(column_info)
+            elif isinstance(column_info, MetricInfoMySQL):
+                payload = MetricInfoQdrant.model_validate(column_info)
+            else:
+                raise ValueError(f"Invalid column_info type: {type(column_info)}")
+            # payload = ColumnInfoQdrant.model_validate(column_info)
             # b) 获取需要插入的字段
             fields_values = [column_info.name, column_info.description] + column_info.alias
+            logger.debug(f"打印:{fields_values}")
             # c) 获取需要处理的字段数量
             fields_len = len(fields_values)
 
@@ -114,6 +130,7 @@ class MetaKnowledgeService:
 
             for field_val in fields_values:
                 embedding_texts.append(field_val)
+        logger.debug(f"[Qdrant]数据构建完成,{len(ids)}条")
         # 3. 批量嵌入向量
         embeddings = []
         embedding_batch_size = 20
@@ -121,7 +138,7 @@ class MetaKnowledgeService:
             batch_record_text = embedding_texts[i:i + embedding_batch_size]
             batch_embeddings = await self.client_manager.embedding_client.aembed_documents(batch_record_text)
             embeddings.extend(batch_embeddings)
-
+        logger.debug(f"[Qdrant]数据嵌入完成,{len(embeddings)}条")
         # 3. 批量更新qdrant
         await self.client_manager.column_qdrant_repository.upsert(ids, embeddings, payloads, 64)
 
@@ -132,7 +149,7 @@ class MetaKnowledgeService:
             meta_config: MetaConfig
     ):
         # 1. 确保es index 存在
-        await self.client_manager.full_text_repository.ensure_index(delete_flag=True)
+        await self.client_manager.full_text_repository.ensure_index()
 
         values: list[ValueInfoES] = []
         # 2. 构建map对象 表名映射<table_id,table_name> 同步映射<column_id,sync>
@@ -140,8 +157,8 @@ class MetaKnowledgeService:
         column_id2sync = {}
         for table in meta_config.tables:
             for column in table.columns:
-                if column.sync:
-                    column_id2sync[f"{table.name}.{column.name}"] = column.sync
+                column_id2sync[f"{table.name}.{column.name}"] = column.sync
+        logger.debug(f"同步字段:{column_id2sync}")
         # 3. 构建批量插入对象->ValueInfoES
         for column_info in column_infos:
             table_name = table_id2name[column_info.table_id]
@@ -165,5 +182,52 @@ class MetaKnowledgeService:
         # 4. 批量插入
         await self.client_manager.full_text_repository.batch_index(values)
 
-    async def _save_metrics_to_meta_db(self, metrics):
-        pass
+    async def _save_metrics_to_meta_db(self, metrics: list[MetricConfig]) -> list[MetricInfoMySQL]:
+        metric_infos: list[MetricInfoMySQL] = []
+        column_metrics: list[ColumnMetricMySQL] = []
+
+        # 1. 构建表和列信息
+        for metric in metrics:
+            # a) 构建表信息
+            metric_info = MetricInfoMySQL(
+                id=metric.name,
+                name=metric.name,
+                description=metric.description,
+                relevant_columns=metric.relevant_columns,
+                alias=metric.alias
+            )
+            metric_infos.append(metric_info)
+            # b) 构建列信息
+            for column in metric.relevant_columns:
+                column_metric = ColumnMetricMySQL(
+                    column_id=column,
+                    metric_id=metric.name,
+                )
+                column_metrics.append(column_metric)
+
+        # 2. 保存元数据信息存入到meta.[table_info & column_info]
+        meta_repository = self.client_manager.meta_repository
+        async with meta_repository.meta_session.begin():
+            await meta_repository.meta_session.execute(text("DELETE FROM metric_info"))
+            await meta_repository.meta_session.execute(text("DELETE FROM column_metric"))
+            await meta_repository.save_metric_infos(metric_infos)
+            await meta_repository.save_column_metic_infos(column_metrics)
+
+        # 3. 返回
+        return metric_infos
+
+    async def delete_data(self, meta_config):
+        # 1. 清除数据库中数据
+        # meta_repository = self.client_manager.meta_repository
+        # dw_repository = self.client_manager.dw_repository
+        # async with dw_repository.dw_session.begin():
+        #     await dw_repository.dw_session.execute(text("DELETE FROM column_info"))
+        #     await dw_repository.dw_session.execute(text("DELETE FROM table_info"))
+        # async with meta_repository.meta_session.begin():
+        #     await meta_repository.meta_session.execute(text("DELETE FROM metric_info"))
+        #     await meta_repository.meta_session.execute(text("DELETE FROM column_metric"))
+        # 2. 清楚Qdrant中数据
+        await self.client_manager.column_qdrant_repository.delete_collection()
+        await self.client_manager.metric_qdrant_repository.delete_collection()
+        # 3. 清除ES中索引
+        await self.client_manager.full_text_repository.delete_index()

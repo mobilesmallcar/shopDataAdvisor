@@ -50,7 +50,8 @@ async def build(meta_config: Path):
             # 3. 调用构建元数据的service
             service = MetaKnowledgeService(client_manager)
 
-            # 4. 调用方法
+            # 4. 调用方法-同步方法
+            await service.delete_data(meta_config)
             await service.build_meta_knowledge(meta_config)
 
     finally:
