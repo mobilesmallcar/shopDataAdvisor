@@ -18,6 +18,8 @@ from app.agent.nodes.sql_execute import execute_sql
 from app.agent.nodes.sql_generate import generate_sql
 from app.agent.nodes.sql_vaildate import validate_sql
 from app.agent.state import DataAgentState
+from app.schemas.meta_client_manager_schemas import MetaClientManger
+from app.service.BaseService import with_meta_clients
 
 
 def create_main_graph() -> CompiledStateGraph:
@@ -84,16 +86,22 @@ def create_main_graph() -> CompiledStateGraph:
 # 创建全局图实例
 graph_app = create_main_graph()
 
+
+@with_meta_clients
+async def main(client_manager: MetaClientManger):
+    # 1. 定义业务
+    query_state = DataAgentState(query="统计华北地区的销售总额")
+
+    # 2. 初始化客户端
+    context = DataAgentContext(client_manager=client_manager)
+
+    # 3. 流式执行
+    async for chunk in graph_app.astream(input=query_state, context=context, stream_mode="custom"):
+        print(chunk)
+
+
 # 测试
 if __name__ == "__main__":
-    async def test():
+    asyncio.run(main())
 
-        my_test_state = DataAgentState(query="统计华北地区的销售总额")
-        context = DataAgentContext()
-        async for chunk in graph_app.astream(input=my_test_state, context=context, stream_mode="custom"):
-            print(chunk)
-
-
-    asyncio.run(test())
-
-    print(graph_app.get_graph().draw_mermaid())
+    # print(graph_app.get_graph().draw_mermaid())

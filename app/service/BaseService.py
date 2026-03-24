@@ -20,7 +20,7 @@ def with_meta_clients(func):
     """
 
     @wraps(func)
-    async def wrapper(meta_config: Path, *args, **kwargs):
+    async def wrapper(*args, **kwargs):
         try:
             # ========== 初始化 ==========
             logger.info("管理器初始化中...")
@@ -51,7 +51,7 @@ def with_meta_clients(func):
                 )
 
                 # ========== 调用业务函数 ==========
-                return await func(client_manager, meta_config, *args, **kwargs)
+                return await func(client_manager, *args, **kwargs)
 
         finally:
             # ========== 自动关闭 ==========
