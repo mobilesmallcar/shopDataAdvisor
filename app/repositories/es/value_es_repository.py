@@ -1,8 +1,5 @@
-import asyncio
-
 from elasticsearch import AsyncElasticsearch
 
-from app.client.es_client_manager import es_client_manager
 from app.core.base_log import logger
 from app.models.es.value_info_es import ValueInfoES
 from elasticsearch.helpers import async_bulk
@@ -87,20 +84,24 @@ class ValueESRepository:
         results: list[ValueInfoES] = []
         for hit in hits:
             source = hit.get("_source")
-            results.append(source)
+            results.append(ValueInfoES(**source))
 
         return results
 
 
 if __name__ == '__main__':
-    async def test():
-        es_client_manager.init()
-        es_client = es_client_manager.client
-        full_text_repository = ValueESRepository(es_client)
-        await full_text_repository.ensure_index()
-        query = "统计一下手机产品的销量"
-        print(await full_text_repository.query(query=query))
-        await es_client_manager.close()
+    import asyncio
+    from app.schemas.meta_client_manager_schemas import MetaClientManger
+    from app.service.BaseService import with_meta_clients
 
 
-    asyncio.run(test())
+    @with_meta_clients
+    async def main(client_manager: MetaClientManger):
+        value_infos = ['统计华北地区的销售总额', '销售总额', '统计', '华北地区']
+        for info in value_infos:
+            result = await client_manager.full_text_repository.query(
+                query=info
+            )
+            print(result)
+
+    asyncio.run(main())

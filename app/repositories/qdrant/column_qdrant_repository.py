@@ -12,21 +12,23 @@ class ColumnQdrantRepository(BaseQdrantRepository[ColumnInfoQdrant]):
         return ColumnInfoQdrant
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     import asyncio
+    from app.schemas.meta_client_manager_schemas import MetaClientManger
+    from app.service.BaseService import with_meta_clients
 
 
-    async def test():
-        embedding_client_manager.init()
-        embedding_client = embedding_client_manager.client
+    @with_meta_clients
+    async def main(client_manager: MetaClientManger):
+        column_infos = ['销售总额', '统计', '统计华北地区的销售总额', '华北地区']
+        for info in column_infos:
+            query = await client_manager.embedding_client.aembed_query(info)
+            result = await client_manager.column_qdrant_repository.search(
+                vector=query,
+                score_threshold=0.6,
+                limit=10,
+            )
+            print(result)
 
-        qdrant_client_manager.init()
-        column_qdrant_repository = ColumnQdrantRepository(qdrant_client_manager.client)
 
-        await column_qdrant_repository.ensure_collection(delete_flag=True)
-        query = "统计一下销售总额"
-        result = await column_qdrant_repository.search(embedding_client.embed_query(query))
-        print(result)
-
-
-    asyncio.run(test())
+    asyncio.run(main())
