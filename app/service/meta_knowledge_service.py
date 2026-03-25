@@ -23,25 +23,24 @@ class MetaKnowledgeService:
         self.client_manager = client_manager
 
     async def build_meta_knowledge(self, config_file):
-        # 1.加载配置文件
+        # 1.
         meta_config: MetaConfig = load_config(MetaConfig, config_file)
         logger.info('加载元数据配置文件')
         if meta_config.tables:
-            # 2.保存表信息到meta数据库
+            # 2.
             table_infos, column_infos = await self._save_tables_to_meta_db(meta_config.tables)
             logger.info('保存表信息和字段信息到meta数据库')
-            # 3.同步字段信息到qdrant
+            # 3.
             await self._sync_columns_to_qdrant(column_infos, self.client_manager.column_qdrant_repository)
             logger.info('同步字段信息到qdrant')
-            # 4.同步字段数据到es
+            # 4.
             await self._sync_values_to_es(table_infos, column_infos, meta_config)
             logger.info('同步字段值到es')
         if meta_config.metrics:
-            # 3.保存metrics信息到meta数据库
+            # 5.
             metric_infos = await self._save_metrics_to_meta_db(meta_config.metrics)
             logger.info('保存metric信息到meta数据库')
-            #
-            # # 6.同步metric信息到qdrant
+            # 6.
             await self._sync_columns_to_qdrant(metric_infos, self.client_manager.metric_qdrant_repository)
             logger.info('同步metric信息到qdrant')
         logger.info('元数据知识库构建完成')
@@ -89,8 +88,8 @@ class MetaKnowledgeService:
         # 2. 保存元数据信息存入到meta.[table_info & column_info]
         meta_repository = self.client_manager.meta_repository
         async with meta_repository.meta_session.begin():
-            await meta_repository.meta_session.execute(text("DELETE FROM column_info"))
-            await meta_repository.meta_session.execute(text("DELETE FROM table_info"))
+            # await meta_repository.meta_session.execute(text("DELETE FROM column_info"))
+            # await meta_repository.meta_session.execute(text("DELETE FROM table_info"))
             await meta_repository.save_table_infos(table_infos)
             await meta_repository.save_column_infos(column_infos)
 
@@ -208,8 +207,8 @@ class MetaKnowledgeService:
         # 2. 保存元数据信息存入到meta.[table_info & column_info]
         meta_repository = self.client_manager.meta_repository
         async with meta_repository.meta_session.begin():
-            await meta_repository.meta_session.execute(text("DELETE FROM metric_info"))
-            await meta_repository.meta_session.execute(text("DELETE FROM column_metric"))
+            # await meta_repository.meta_session.execute(text("DELETE FROM metric_info"))
+            # await meta_repository.meta_session.execute(text("DELETE FROM column_metric"))
             await meta_repository.save_metric_infos(metric_infos)
             await meta_repository.save_column_metic_infos(column_metrics)
 
@@ -218,14 +217,12 @@ class MetaKnowledgeService:
 
     async def delete_data(self, meta_config):
         # 1. 清除数据库中数据
-        # meta_repository = self.client_manager.meta_repository
-        # dw_repository = self.client_manager.dw_repository
-        # async with dw_repository.dw_session.begin():
-        #     await dw_repository.dw_session.execute(text("DELETE FROM column_info"))
-        #     await dw_repository.dw_session.execute(text("DELETE FROM table_info"))
-        # async with meta_repository.meta_session.begin():
-        #     await meta_repository.meta_session.execute(text("DELETE FROM metric_info"))
-        #     await meta_repository.meta_session.execute(text("DELETE FROM column_metric"))
+        meta_repository = self.client_manager.meta_repository
+        async with meta_repository.meta_session.begin():
+            await meta_repository.meta_session.execute(text("DELETE FROM column_info"))
+            await meta_repository.meta_session.execute(text("DELETE FROM table_info"))
+            await meta_repository.meta_session.execute(text("DELETE FROM metric_info"))
+            await meta_repository.meta_session.execute(text("DELETE FROM column_metric"))
         # 2. 清楚Qdrant中数据
         await self.client_manager.column_qdrant_repository.delete_collection()
         await self.client_manager.metric_qdrant_repository.delete_collection()
