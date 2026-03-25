@@ -7,6 +7,10 @@ from app.repositories.qdrant.base_qdrant_repository import BaseQdrantRepository
 class ColumnQdrantRepository(BaseQdrantRepository[ColumnInfoQdrant]):
     collection_name = "data_advisor_column"
 
+    @property
+    def model(self):
+        return ColumnInfoQdrant
+
 
 if __name__ == "__main__":
     import asyncio

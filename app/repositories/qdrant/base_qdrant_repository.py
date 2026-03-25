@@ -1,4 +1,4 @@
-from typing import TypeVar, Generic
+from typing import TypeVar, Generic, Type
 
 from qdrant_client import AsyncQdrantClient
 from qdrant_client.models import VectorParams, Distance, PointStruct
@@ -14,6 +14,10 @@ class BaseQdrantRepository(Generic[T]):
 
     def __init__(self, client: AsyncQdrantClient):
         self.client = client
+
+    @property
+    def model(self) -> Type[T]:
+        raise NotImplementedError("请在子类中实现 model 属性")
 
     async def delete_collection(self):
         await self.client.delete_collection(self.collection_name)
@@ -80,4 +84,4 @@ class BaseQdrantRepository(Generic[T]):
             score_threshold=score_threshold,
             limit=limit,
         )
-        return [point.payload for point in result.points]
+        return [self.model(**point.payload) for point in result.points]

@@ -61,6 +61,7 @@ class ESConfig:
 class LLMConfig:
     model_name: str
     api_key: str
+    api_base: str
 
 
 @dataclass

@@ -18,7 +18,19 @@ class EmbeddingClientManager:
 
     def init(self):
         # self.client = HuggingFaceEndpointEmbeddings(model=self._get_url())
-        self.client = HuggingFaceEmbeddings(model_name=self._get_url())
+        self.client = HuggingFaceEmbeddings(
+            model_name=self._get_url(),
+            # model_kwargs={
+            #     "device": "cuda",  # 或 "cuda" 如果你有 GPU
+            #     "local_files_only": True,  # 强制只从本地加载，防止任何网络行为
+            # },
+            # encode_kwargs={
+            #     "normalize_embeddings": True,  # bge 系列通常需要归一化
+            #     "show_progress_bar": False,  # 编码时不显示进度条
+            # },
+            # # 重要：禁用模型加载时的进度条（对 sentence-transformers 有效）
+            # show_progress=False,
+        )
 
 
 embedding_client_manager = EmbeddingClientManager(app_config.embedding)

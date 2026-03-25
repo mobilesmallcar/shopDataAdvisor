@@ -41,5 +41,6 @@ es:
 
 
 llm:
-  model_name: deepseek-chat
-  api_key: sk-*****
+  model_name: qwen-flash
+  api_key: sk-1d883fe821b44e3590a06cfe37914475
+  api_base: https://dashscope.aliyuncs.com/compatible-mode/v1
