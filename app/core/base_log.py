@@ -87,6 +87,9 @@ disable_noise_logs()
 # ======================
 # 对外导出 logger
 # ======================
+from loguru._logger import Logger
+
+logger: Logger
 __all__ = ["logger"]
 
 if __name__ == '__main__':

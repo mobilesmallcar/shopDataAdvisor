@@ -42,5 +42,5 @@ async def extract_keywords(state: DataAgentState, runtime: Runtime[DataAgentCont
     keywords = list(set(w for w in keywords if not is_numeric(w)))
 
     # 4. 返回
-    logger.info(f"关键字提取:{keywords}")
+    logger.info(f"关键字提取成功:{keywords}")
     return {"keywords": keywords}

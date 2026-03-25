@@ -1,3 +1,6 @@
+from typing import Sequence
+
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.mysql.column_info_mysql import ColumnInfoMySQL
@@ -21,3 +24,32 @@ class MetaMysqlRepository:
 
     async def save_column_metic_infos(self, column_infos: list[ColumnMetricMySQL]):
         self.meta_session.add_all(column_infos)
+
+    async def get_column_by_id(self, column_id) -> ColumnInfoMySQL | None:
+        return await self.meta_session.get(ColumnInfoMySQL, column_id)
+
+    async def get_columns_by_ids(self, column_ids) -> Sequence[ColumnInfoMySQL]:
+        # 构建语句:查询所有列信息
+        stmt = select(ColumnInfoMySQL).where(ColumnInfoMySQL.id.in_(column_ids))
+
+        result = await self.meta_session.execute(stmt)
+        return result.scalars().all()
+
+    async def get_table_by_id(self, column_id) -> ColumnInfoMySQL | None:
+        return await self.meta_session.get(ColumnInfoMySQL, column_id)
+
+    async def get_table_by_ids(self, table_ids: list[str]) -> Sequence[TableInfoMySQL]:
+        # 构建语句:查询所有table信息
+        stmt = select(TableInfoMySQL).where(TableInfoMySQL.id.in_(table_ids))
+
+        result = await self.meta_session.execute(stmt)
+        return result.scalars().all()
+
+    async def get_key_columns_by_table_ids(self, table_id: str) -> Sequence[ColumnInfoMySQL]:
+        stmt = select(ColumnInfoMySQL).where(
+            ColumnInfoMySQL.table_id == table_id,
+            ColumnInfoMySQL.role.in_(['primary_key', 'foreign_key'])
+        )
+        # 执行返回
+        result = await self.meta_session.execute(stmt)
+        return result.scalars().all()
