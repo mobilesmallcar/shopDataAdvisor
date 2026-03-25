@@ -43,7 +43,7 @@ class MetaKnowledgeService:
             #
             # # 6.同步metric信息到qdrant
             await self._sync_columns_to_qdrant(metric_infos, self.client_manager.metric_qdrant_repository)
-            # logger.info('同步metric信息到qdrant')
+            logger.info('同步metric信息到qdrant')
         logger.info('元数据知识库构建完成')
 
     async def _save_tables_to_meta_db(self, tables: list[TableConfig]) \
@@ -100,7 +100,7 @@ class MetaKnowledgeService:
     async def _sync_columns_to_qdrant(
             self,
             columns: list[ColumnInfoMySQL | MetricInfoMySQL],
-            repository: MetricQdrantRepository | ColumnQdrantRepository
+            repository: ColumnQdrantRepository | MetricQdrantRepository
     ):
         # 1. 创建qdrant collection
         await repository.ensure_collection()
@@ -108,7 +108,7 @@ class MetaKnowledgeService:
         # 2. 构建qdrant数据
         ids: list = []
         embedding_texts: list[str] = []
-        payloads: list[ColumnInfoQdrant] = []
+        payloads: list[ColumnInfoQdrant | MetricInfoMySQL] = []
         for column_info in columns:
             # a) 获取payload
             if isinstance(column_info, ColumnInfoMySQL):
@@ -140,7 +140,7 @@ class MetaKnowledgeService:
             embeddings.extend(batch_embeddings)
         logger.debug(f"[Qdrant]数据嵌入完成,{len(embeddings)}条")
         # 3. 批量更新qdrant
-        await self.client_manager.column_qdrant_repository.upsert(ids, embeddings, payloads, 64)
+        await repository.upsert(ids, embeddings, payloads, 64)
 
     async def _sync_values_to_es(
             self,

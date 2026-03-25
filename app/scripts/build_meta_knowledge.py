@@ -10,9 +10,11 @@ from app.service.meta_knowledge_service import MetaKnowledgeService
 
 @with_meta_clients
 async def build(client_manager: MetaClientManger, meta_config: Path):
-    # 业务代码
+    # 1. 获取service
     service = MetaKnowledgeService(client_manager)
+    # 2. 清除残留数据
     await service.delete_data(meta_config)
+    # 3. 构建元数据
     await service.build_meta_knowledge(meta_config)
 
 
