@@ -55,8 +55,8 @@ class ValueESRepository:
                 yield {
                     "_op_type": "index",  # 存在则更新，不存在则创建
                     "_index": self.es_index_name,
-                    "_id": doc["id"],  # 用 id 字段作为 ES 文档 ID（TypedDict 用 doc["id"]，dataclass 用 doc.id）
-                    "_source": doc  # 直接传入你的 ValueInfoES 对象
+                    "_id": doc.id,  # 用 id 字段作为 ES 文档 ID（TypedDict 用 doc["id"]，dataclass 用 doc.id）
+                    "_source": doc.model_dump()  # 直接传入你的 ValueInfoES 对象
                 }
 
         # 执行批量插入
