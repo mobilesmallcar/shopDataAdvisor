@@ -6,6 +6,7 @@ from app.client.es_client_manager import es_client_manager
 from app.client.embedding_client import embedding_client_manager
 from app.client.qdrant_client_manager import qdrant_client_manager
 from app.client.mysql_client_manager import dw_client_manager, meta_client_manager, MySQLClientManager
+from app.core.context import request_id_ctx_var
 from app.repositories.es.value_es_repository import ValueESRepository
 from app.repositories.mysql.dw_mysql_repository import DWMysqlRepository
 from app.repositories.mysql.meta_mysql_repository import MetaMysqlRepository
@@ -22,6 +23,9 @@ def with_meta_clients(func):
     @wraps(func)
     async def wrapper(*args, **kwargs):
         try:
+            # 如果没有默认值那么默认
+            request_id = kwargs.pop("request_id", "xsy")
+            request_id_ctx_var.set(request_id)
             # ========== 初始化 ==========
             logger.info("管理器初始化中...")
             dw_client_manager.init()

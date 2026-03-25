@@ -6,7 +6,6 @@ from langgraph.graph.state import CompiledStateGraph
 
 from app.agent.state import DataAgentState
 from app.agent.context import DataAgentContext
-from app.agent.context import DataAgentContext
 
 from app.schemas.meta_client_manager_schemas import MetaClientManger
 from app.service.BaseService import with_meta_clients
@@ -106,6 +105,6 @@ async def main(client_manager: MetaClientManger):
 
 # 测试
 if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.run(main(request_id="xsy"))
 
     # print(graph_app.get_graph().draw_mermaid())
