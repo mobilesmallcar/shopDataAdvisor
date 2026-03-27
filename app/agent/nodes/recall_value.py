@@ -9,7 +9,7 @@ from app.models.es.value_info_es import ValueInfoES
 # 导入仓库
 from app.repositories.es.value_es_repository import ValueESRepository
 # 导入装饰器
-from app.decorators import recall_node,writer_node
+from app.decorators import recall_node, writer_node
 
 
 # 仓库搜索相关信息
