@@ -9,7 +9,8 @@ from app.models import ColumnInfoQdrant
 # 导入仓库
 from app.repositories import ColumnQdrantRepository
 # 导入装饰器
-from app.decorators import recall_node, llm_invoke
+from app.decorators import recall_node, llm_invoke, writer_node
+
 
 # 仓库搜索相关信息
 async def search_column(
@@ -23,6 +24,7 @@ async def search_column(
     return await repo.search(vec, score, limit)
 
 
+@writer_node("召回字段信息")
 @llm_invoke(
     prompt_name="extend_keywords_for_column_recall",
     param_builder=lambda state: {

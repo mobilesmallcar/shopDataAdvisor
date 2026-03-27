@@ -4,13 +4,14 @@ from app.agent.context import DataAgentContext
 from app.agent.state import DataAgentState, TableInfoState
 
 # 导入装饰器
-from app.decorators import llm_invoke, filter_list, log_filter
+from app.decorators import llm_invoke, filter_list, log_filter, writer_node
 
 
 def get_table_list(state: DataAgentState) -> list[TableInfoState]:
     return state.table_infos
 
 
+@writer_node("过滤表格信息")
 @llm_invoke(
     prompt_name="filter_table_info",
     param_builder=lambda state: {
@@ -25,8 +26,8 @@ async def filter_table_info(
         runtime: Runtime[DataAgentContext],
         final_rsult: list[TableInfoState]
 ):
-    writer = runtime.stream_writer
-    writer("过滤指标信息")
+    # writer = runtime.stream_writer
+    # writer({"process": "过滤表格信息"})
     return {"table_infos": final_rsult}
 
 # async def filter_table_info(
@@ -39,7 +40,7 @@ async def filter_table_info(
 #     from langchain_core.output_parsers import JsonOutputParser
 #     from langchain_core.prompts import PromptTemplate
 #     writer = runtime.stream_writer
-#     writer("过滤表格信息")
+#     writer({"process": "过滤表格信息"})
 #     table_infos: list[TableInfoState] = state.table_infos
 #     query = state.query
 #

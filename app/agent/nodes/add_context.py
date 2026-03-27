@@ -4,12 +4,11 @@ from langgraph.runtime import Runtime
 from app.core import logger
 from app.agent.context import DataAgentContext
 from app.agent.state import DataAgentState, DateInfoState, DBInfoState
+from app.decorators import writer_node
 
 
+@writer_node("添加额外上下文")
 async def add_context(state: DataAgentState, runtime: Runtime[DataAgentContext]):
-    writer = runtime.stream_writer
-    writer("添加额外上下文")
-
     # 1. 获取当前时间
     today = datetime.today()
 

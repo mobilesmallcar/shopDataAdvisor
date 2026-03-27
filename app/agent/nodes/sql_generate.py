@@ -6,7 +6,7 @@ from app.agent.state import DataAgentState
 from app.agent.context import DataAgentContext
 
 # 导入装饰器
-from app.decorators import llm_invoke
+from app.decorators import llm_invoke, writer_node
 
 
 def build_generate_sql_params(state: DataAgentState) -> dict[str, Any]:
@@ -19,6 +19,7 @@ def build_generate_sql_params(state: DataAgentState) -> dict[str, Any]:
     }
 
 
+@writer_node("SQL生成")
 @llm_invoke(
     prompt_name="generate_sql",
     param_builder=build_generate_sql_params,
@@ -26,7 +27,7 @@ def build_generate_sql_params(state: DataAgentState) -> dict[str, Any]:
 )
 async def generate_sql(state: DataAgentState, runtime: Runtime[DataAgentContext], result: str):
     writer = runtime.stream_writer
-    writer("SQL生成")
+    writer({"process": "SQL生成"})
 
     # 返回
     logger.info(f"SQL生成结果：{result}")

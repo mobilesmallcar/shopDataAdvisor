@@ -4,6 +4,7 @@ from langgraph.runtime import Runtime
 from app.core import logger
 from app.agent.state import DataAgentState
 from app.agent.context import DataAgentContext
+from app.decorators import writer_node
 
 
 def is_numeric(s: str) -> bool:
@@ -14,10 +15,8 @@ def is_numeric(s: str) -> bool:
         return False
 
 
+@writer_node("抽取关键字")
 async def extract_keywords(state: DataAgentState, runtime: Runtime[DataAgentContext]):
-    writer = runtime.stream_writer
-    writer("提取关键字")
-
     # 1. 获取查询参数
     query = state.query
 

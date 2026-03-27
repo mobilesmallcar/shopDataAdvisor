@@ -9,7 +9,7 @@ from app.models.es.value_info_es import ValueInfoES
 # 导入仓库
 from app.repositories.es.value_es_repository import ValueESRepository
 # 导入装饰器
-from app.decorators import recall_node
+from app.decorators import recall_node,writer_node
 
 
 # 仓库搜索相关信息
@@ -22,6 +22,7 @@ async def search_value(
     return await repo.query(keyword, score, limit)
 
 
+@writer_node("召回值信息")
 @llm_invoke(
     prompt_name="extend_keywords_for_value_recall",
     param_builder=lambda state: {

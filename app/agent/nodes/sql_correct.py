@@ -7,7 +7,7 @@ from app.agent.state import DataAgentState
 from app.agent.context import DataAgentContext
 
 # 导入装饰器
-from app.decorators import llm_invoke
+from app.decorators import llm_invoke, writer_node
 
 
 def build_correct_sql_params(state: DataAgentState) -> dict[str, Any]:
@@ -22,13 +22,14 @@ def build_correct_sql_params(state: DataAgentState) -> dict[str, Any]:
     }
 
 
+@writer_node("SQL纠正")
 @llm_invoke(
     prompt_name="correct_sql",
     param_builder=build_correct_sql_params,
 )
 async def correct_sql(state: DataAgentState, runtime: Runtime[DataAgentContext], result: str):
-    writer = runtime.stream_writer
-    writer("SQL纠正")
+    # writer = runtime.stream_writer
+    # writer({"process": "SQL纠正"})
 
     # 返回
     logger.info(f"SQL纠正结果：{result}")

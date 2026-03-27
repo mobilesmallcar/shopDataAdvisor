@@ -6,6 +6,7 @@ from langgraph.runtime import Runtime
 from app.core import logger
 from app.agent.context import DataAgentContext
 from app.agent.state import DataAgentState, ColumnInfoState, TableInfoState, MetricInfoState
+from app.decorators import writer_node
 
 # 导入仓库
 from app.repositories import MetaMysqlRepository
@@ -13,9 +14,10 @@ from app.repositories import MetaMysqlRepository
 from app.models import ColumnInfoMySQL, TableInfoMySQL, ColumnInfoQdrant, MetricInfoQdrant, ValueInfoES
 
 
+@writer_node("合并召回信息")
 async def merge_retrieved_info(state: DataAgentState, runtime: Runtime[DataAgentContext]):
-    writer = runtime.stream_writer
-    writer("合并召回信息")
+    # writer = runtime.stream_writer
+    # writer({"process": "合并召回信息"})
 
     # 获取需要合并的对象 和 对应的仓库
     retrieved_columns: list[ColumnInfoQdrant] = state.retrieved_columns

@@ -30,44 +30,39 @@ def recall_node(
 ):
     def decorator(func: Callable[[DataAgentState, Runtime[DataAgentContext], Dict[str, T]], Awaitable[dict]]):
         async def wrapper(state: DataAgentState, runtime: Runtime[DataAgentContext], llm_result: list[str]) -> dict:
-            writer = runtime.stream_writer
-            writer(f"召回{display_name}")
+            # writer = runtime.stream_writer
+            # writer({"process": f"召回{display_name}"})
 
-            retrieved_key = f"retrieved_{model_cls.__name__.lower()}"
+            # retrieved_key = f"retrieved_{model_cls.__name__.lower()}"
             # query = state.query
             keywords = state.keywords
             repo = repo_getter(runtime)
 
-            try:
-                logger.debug(f"召回{display_name}keywords: {keywords}")
-                logger.debug(f"召回{display_name}大模型抽取的关键字参数{llm_result}")
-                keywords = list(set(keywords + llm_result))
-                logger.debug(f"召回{display_name}合并后参数{keywords}")
-                # 获取 embedding（如果需要）
-                embedding = None
+            logger.debug(f"召回{display_name}keywords: {keywords}")
+            logger.debug(f"召回{display_name}大模型抽取的关键字参数{llm_result}")
+            keywords = list(set(keywords + llm_result))
+            logger.debug(f"召回{display_name}合并后参数{keywords}")
+            # 获取 embedding（如果需要）
+            embedding = None
+            if need_embedding:
+                embedding = runtime.context.client_manager.embedding_client
+
+            # 召回并去重
+            data_map: Dict[str, T] = {}
+            for keyword in keywords:
                 if need_embedding:
-                    embedding = runtime.context.client_manager.embedding_client
+                    # 搜索qdrant
+                    items = await search_func(repo, keyword, 0.6, 5, embedding)
+                else:
+                    # 搜索ES
+                    items = await search_func(repo, keyword, 0.6, 5)
 
-                # 召回并去重
-                data_map: Dict[str, T] = {}
-                for keyword in keywords:
-                    if need_embedding:
-                        # 搜索qdrant
-                        items = await search_func(repo, keyword, 0.6, 5, embedding)
-                    else:
-                        # 搜索ES
-                        items = await search_func(repo, keyword, 0.6, 5)
+                for item in items:
+                    if item.id not in data_map:
+                        data_map[item.id] = item
 
-                    for item in items:
-                        if item.id not in data_map:
-                            data_map[item.id] = item
-
-                logger.info(f"[{display_name}]召回成功:{pformat(data_map.keys(), indent=2)}")
-                return await func(state, runtime, data_map)
-
-            except Exception as e:
-                logger.error(f"[{display_name}]召回失败: {str(e)}")
-                return {retrieved_key: []}
+            logger.info(f"[{display_name}]召回成功:{pformat(data_map.keys(), indent=2)}")
+            return await func(state, runtime, data_map)
 
         return wrapper
 

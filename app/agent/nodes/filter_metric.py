@@ -4,13 +4,14 @@ from app.agent.context import DataAgentContext
 from app.agent.state import DataAgentState, MetricInfoState
 
 # 导入装饰器
-from app.decorators import llm_invoke, filter_list, log_filter
+from app.decorators import llm_invoke, filter_list, log_filter, writer_node
 
 
 def get_metric_list(state: DataAgentState) -> list[MetricInfoState]:
     return state.metric_infos
 
 
+@writer_node("过滤指标信息")
 @llm_invoke(
     prompt_name="filter_metric_info",
     param_builder=lambda state: {
@@ -25,8 +26,8 @@ async def filter_metric_info(
         runtime: Runtime[DataAgentContext],
         final_rsult: list[MetricInfoState]
 ):
-    writer = runtime.stream_writer
-    writer("过滤指标信息")
+    # writer = runtime.stream_writer
+    # writer({"process": "过滤指标信息"})
     return {"metric_infos": final_rsult}
 
 # async def filter_metric_info(
