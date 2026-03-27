@@ -1,7 +1,11 @@
+import os
+
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
+from starlette.responses import FileResponse
 
 from app.api.routers.chat_router import chat_router
+from app.api.routers.front_router import frontend_router
 from app.core.lifesapn import lifespan
 from app.core.middleware import RequestIDMiddleware
 
@@ -29,6 +33,7 @@ def create_app() -> FastAPI:
         prefix="/api",  # 统一前缀
         tags=["用户模块"],  # Swagger 分组
     )
+    app.include_router(frontend_router)
     # 4. 返回实例
     return app
 

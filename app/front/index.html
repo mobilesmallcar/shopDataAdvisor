@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>智能数据助手 · AI对话查询</title>
+    <!-- 引入 ECharts 使用 CDN 确保加载 -->
+    <script src="https://unpkg.com/echarts@5.5.0/dist/echarts.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --bg-message-user: #eef2ff;
+            --bg-message-assistant: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            --avatar-bg: #eef2ff;
+            --step-bg: #f1f5f9;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            --accent-light: #dbeafe;
+            --shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+            --table-header-bg: #f8fafc;
+            --table-hover: #f1f5f9;
+            --modal-bg: #ffffff;
+            --modal-overlay: rgba(0, 0, 0, 0.5);
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-message-user: #1e293b;
+            --bg-message-assistant: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border-color: #334155;
+            --avatar-bg: #334155;
+            --step-bg: #1e293b;
+            --accent: #60a5fa;
+            --accent-hover: #3b82f6;
+            --accent-light: #1e293b;
+            --shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+            --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            --table-header-bg: #1e293b;
+            --table-hover: #334155;
+            --modal-bg: #1e293b;
+            --modal-overlay: rgba(0, 0, 0, 0.7);
+        }
+
+        html, body {
+            height: 100%;
+            width: 100%;
+            background: var(--bg-secondary);
+            font-family: system-ui, -apple-system, 'Segoe UI', 'Roboto', sans-serif;
+            overflow: hidden;
+            transition: background 0.3s ease;
+        }
+
+        #chatRoot {
+            height: 100%;
+            width: 100%;
+        }
+
+        .chat-app {
+            height: 100%;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            background: var(--bg-primary);
+            overflow: hidden;
+        }
+
+        .chat-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg-primary);
+            z-index: 10;
+        }
+
+        .header-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, var(--accent), #8b5cf6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .theme-toggle, .config-btn {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 30px;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            color: var(--text-primary);
+        }
+
+        .theme-toggle:hover, .config-btn:hover {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px 20px 180px 20px;
+            scroll-behavior: smooth;
+            height: 0;
+        }
+
+        .messages-list {
+            max-width: 1000px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        /* 现代化弹框 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--modal-overlay);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .modal-container {
+            background: var(--modal-bg);
+            border-radius: 24px;
+            padding: 28px 32px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border-color);
+            animation: slideUp 0.3s ease;
+        }
+
+        .modal-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+        }
+
+        .modal-content {
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            margin-bottom: 20px;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .modal-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-light);
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        .modal-btn {
+            padding: 10px 20px;
+            border-radius: 40px;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .modal-btn-cancel {
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+
+        .modal-btn-cancel:hover {
+            background: var(--border-color);
+        }
+
+        .modal-btn-confirm {
+            background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+            color: white;
+        }
+
+        .modal-btn-confirm:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow);
+        }
+
+        .modal-btn-danger {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* Toast 通知 */
+        .toast-notification {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--modal-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 40px;
+            padding: 12px 24px;
+            box-shadow: var(--shadow-lg);
+            z-index: 1001;
+            animation: slideUp 0.3s ease;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            background: linear-gradient(135deg, var(--bg-secondary), var(--bg-primary));
+            border-radius: 32px;
+            margin-top: 40px;
+        }
+
+        .empty-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+
+        .recommend-questions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        .recommend-card {
+            background: var(--bg-message-assistant);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+
+        .recommend-card:hover {
+            background: var(--accent);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .message-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            animation: fadeSlideUp 0.3s ease-out;
+        }
+
+        .message-row.user {
+            flex-direction: row-reverse;
+        }
+
+        .avatar {
+            width: 36px;
+            height: 36px;
+            background: var(--avatar-bg);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .bubble {
+            max-width: 85%;
+            padding: 12px 18px;
+            border-radius: 24px;
+            line-height: 1.5;
+            font-size: 0.95rem;
+            color: var(--text-primary);
+            position: relative;
+        }
+
+        .message-row.user .bubble {
+            background: var(--bg-message-user);
+            border-bottom-right-radius: 6px;
+        }
+
+        .message-row.assistant .bubble {
+            background: var(--bg-message-assistant);
+            border-bottom-left-radius: 6px;
+            border: 1px solid var(--border-color);
+        }
+
+        .modern-table-wrapper {
+            overflow-x: auto;
+            border-radius: 16px;
+            margin: 12px 0;
+            box-shadow: var(--shadow);
+        }
+
+        .modern-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            background: var(--bg-primary);
+        }
+
+        .modern-table th {
+            background: var(--table-header-bg);
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-primary);
+            border-bottom: 2px solid var(--accent);
+        }
+
+        .modern-table td {
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+
+        .modern-table tbody tr:hover {
+            background: var(--table-hover);
+        }
+
+        .chart-container {
+            width: 100%;
+            height: 300px;
+            margin: 12px 0;
+            background: var(--bg-primary);
+            border-radius: 12px;
+        }
+
+        .data-actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .data-btn {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--text-secondary);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .data-btn:hover {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        .step-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.9rem;
+            padding: 6px 0;
+        }
+
+        .circular-progress {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+        }
+
+        .loading-spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--border-color);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            display: inline-block;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .input-float {
+            position: fixed;
+            bottom: 24px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            pointer-events: none;
+            padding: 0 20px;
+            z-index: 20;
+        }
+
+        .input-card {
+            pointer-events: auto;
+            width: 100%;
+            max-width: 780px;
+            background: var(--bg-primary);
+            backdrop-filter: blur(16px);
+            border-radius: 60px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            align-items: center;
+            padding: 6px 6px 6px 20px;
+            gap: 8px;
+        }
+
+        .input-card input {
+            flex: 1;
+            border: none;
+            outline: none;
+            background: transparent;
+            font-size: 1rem;
+            padding: 14px 0;
+            color: var(--text-primary);
+        }
+
+        .icon-btn {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2rem;
+            padding: 8px;
+            border-radius: 50%;
+            transition: all 0.2s;
+            color: var(--text-secondary);
+        }
+
+        .icon-btn:hover {
+            background: var(--bg-secondary);
+            transform: scale(1.05);
+        }
+
+        .send-btn {
+            background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+            border: none;
+            border-radius: 40px;
+            padding: 10px 24px;
+            font-weight: 500;
+            color: white;
+            cursor: pointer;
+        }
+
+        .send-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .mic-btn.recording {
+            color: #ef4444;
+            animation: pulse-red 1s infinite;
+        }
+
+        @keyframes pulse-red {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        @keyframes fadeSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .messages-container::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .messages-container::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+
+        .messages-container::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+<div id="chatRoot"></div>
+
+<script>
+    (function () {
+        const API_URL = "/api/query";
+        let messages = [];
+        let loading = false;
+        let isRecording = false;
+        let recognition = null;
+        let requestId = null;
+
+        let messagesContainer, messagesListEl, inputEl, sendBtn, clearBtn, micBtn, themeToggle, configBtn;
+        let currentTheme = 'light';
+
+        // 现代化弹框
+        function showModal(options) {
+            const {
+                title,
+                message,
+                inputPlaceholder,
+                onConfirm,
+                onCancel,
+                confirmText = '确定',
+                cancelText = '取消',
+                isDanger = false
+            } = options;
+
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay';
+
+            const modalHtml = `
+                <div class="modal-container">
+                    <div class="modal-title">${title}</div>
+                    <div class="modal-content">${message}</div>
+                    ${inputPlaceholder ? `<input type="text" class="modal-input" id="modalInput" placeholder="${inputPlaceholder}" />` : ''}
+                    <div class="modal-buttons">
+                        <button class="modal-btn modal-btn-cancel" id="modalCancel">${cancelText}</button>
+                        <button class="modal-btn ${isDanger ? 'modal-btn-danger' : 'modal-btn-confirm'}" id="modalConfirm">${confirmText}</button>
+                    </div>
+                </div>
+            `;
+
+            overlay.innerHTML = modalHtml;
+            document.body.appendChild(overlay);
+
+            const inputEl_modal = inputPlaceholder ? overlay.querySelector('#modalInput') : null;
+            const confirmBtn = overlay.querySelector('#modalConfirm');
+            const cancelBtn = overlay.querySelector('#modalCancel');
+
+            const closeModal = () => {
+                overlay.remove();
+            };
+
+            confirmBtn.addEventListener('click', () => {
+                const inputValue = inputEl_modal ? inputEl_modal.value : null;
+                if (onConfirm) onConfirm(inputValue);
+                closeModal();
+            });
+
+            cancelBtn.addEventListener('click', () => {
+                if (onCancel) onCancel();
+                closeModal();
+            });
+
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) closeModal();
+            });
+        }
+
+        // Toast 通知
+        function showToast(message, duration = 2000) {
+            const toast = document.createElement('div');
+            toast.className = 'toast-notification';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.remove();
+            }, duration);
+        }
+
+        function setTheme(theme) {
+            currentTheme = theme;
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+            if (themeToggle) themeToggle.textContent = theme === 'light' ? '🌙 深色' : '☀️ 浅色';
+        }
+
+        function toggleTheme() {
+            setTheme(currentTheme === 'light' ? 'dark' : 'light');
+        }
+
+        // 配置 request_id
+        function showConfigModal() {
+            showModal({
+                title: '⚙️ 请求配置',
+                message: '设置 Request ID（可选，用于追踪请求）',
+                inputPlaceholder: '请输入 Request ID',
+                confirmText: '保存',
+                cancelText: '取消',
+                onConfirm: (value) => {
+                    if (value && value.trim()) {
+                        requestId = value.trim();
+                        showToast(`✅ Request ID 已设置: ${requestId}`);
+                    } else {
+                        requestId = null;
+                        showToast('已清除 Request ID');
+                    }
+                }
+            });
+        }
+
+        function initSpeechRecognition() {
+            const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognitionAPI) {
+                console.warn('浏览器不支持语音识别');
+                return null;
+            }
+            const recognition = new SpeechRecognitionAPI();
+            recognition.lang = 'zh-CN';
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+            recognition.continuous = false;
+            return recognition;
+        }
+
+        function startVoiceInput() {
+            if (!recognition) {
+                showModal({
+                    title: '🎤 语音输入不可用',
+                    message: '您的浏览器不支持语音识别功能，请使用 Chrome、Edge 或 Safari 浏览器',
+                    confirmText: '知道了',
+                    cancelText: ''
+                });
+                return;
+            }
+            if (isRecording) return;
+
+            try {
+                isRecording = true;
+                micBtn.classList.add('recording');
+                micBtn.textContent = '🎤⚡';
+
+                recognition.start();
+
+                recognition.onresult = (event) => {
+                    const transcript = event.results[0][0].transcript;
+                    inputEl.value = transcript;
+                    isRecording = false;
+                    micBtn.classList.remove('recording');
+                    micBtn.textContent = '🎤';
+                };
+
+                recognition.onerror = (event) => {
+                    console.error('语音识别错误:', event.error);
+                    let errorMsg = '';
+                    switch (event.error) {
+                        case 'not-allowed':
+                            errorMsg = '请允许麦克风权限';
+                            break;
+                        case 'no-speech':
+                            errorMsg = '未检测到语音';
+                            break;
+                        default:
+                            errorMsg = '语音识别失败，请重试';
+                    }
+                    showModal({
+                        title: '🎤 语音识别失败',
+                        message: errorMsg,
+                        confirmText: '知道了',
+                        cancelText: ''
+                    });
+                    isRecording = false;
+                    micBtn.classList.remove('recording');
+                    micBtn.textContent = '🎤';
+                };
+
+                recognition.onend = () => {
+                    isRecording = false;
+                    micBtn.classList.remove('recording');
+                    micBtn.textContent = '🎤';
+                };
+            } catch (err) {
+                console.error('启动语音识别失败:', err);
+                showModal({
+                    title: '🎤 启动失败',
+                    message: '语音识别启动失败，请检查麦克风权限',
+                    confirmText: '知道了',
+                    cancelText: ''
+                });
+                isRecording = false;
+                micBtn.classList.remove('recording');
+                micBtn.textContent = '🎤';
+            }
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/[&<>]/g, function (m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+
+        function exportToCSV(columns, rows, filename = 'data.csv') {
+            const csvRows = [columns.join(',')];
+            for (const row of rows) {
+                const values = columns.map(col => {
+                    const val = row[col] !== undefined ? row[col] : '';
+                    return `"${String(val).replace(/"/g, '""')}"`;
+                });
+                csvRows.push(values.join(','));
+            }
+            const blob = new Blob([csvRows.join('\n')], {type: 'text/csv;charset=utf-8;'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('📥 导出成功');
+        }
+
+        async function copyToClipboard(text) {
+            try {
+                await navigator.clipboard.writeText(text);
+                showToast('📋 已复制到剪贴板');
+            } catch (err) {
+                console.error('复制失败:', err);
+                showToast('❌ 复制失败');
+            }
+        }
+
+        // 等待 ECharts 加载完成
+        function waitForECharts(callback) {
+            if (typeof echarts !== 'undefined') {
+                callback();
+            } else {
+                setTimeout(() => waitForECharts(callback), 100);
+            }
+        }
+
+        function renderChart(elementId, columns, rows, xAxisCol) {
+            if (typeof echarts === 'undefined') {
+                console.warn('ECharts 未加载，等待加载中...');
+                setTimeout(() => renderChart(elementId, columns, rows, xAxisCol), 200);
+                return null;
+            }
+
+            const chartDom = document.getElementById(elementId);
+            if (!chartDom) return null;
+
+            const myChart = echarts.init(chartDom);
+
+            const numericCols = columns.filter(col => {
+                return rows.some(row => typeof row[col] === 'number');
+            });
+
+            const series = numericCols.map(col => ({
+                name: col,
+                type: 'bar',
+                data: rows.map(row => row[col]),
+                itemStyle: {
+                    borderRadius: [4, 4, 0, 0],
+                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                        {offset: 0, color: '#3b82f6'},
+                        {offset: 1, color: '#8b5cf6'}
+                    ])
+                }
+            }));
+
+            const option = {
+                tooltip: {trigger: 'axis', axisPointer: {type: 'shadow'}},
+                grid: {borderWidth: 0, containLabel: true, left: 50, right: 20, top: 30, bottom: 20},
+                xAxis: {
+                    type: 'category',
+                    data: rows.map(row => row[xAxisCol] || row[columns[0]]),
+                    axisLabel: {
+                        rotate: rows.length > 6 ? 30 : 0,
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-primary')
+                    },
+                    axisLine: {lineStyle: {color: getComputedStyle(document.documentElement).getPropertyValue('--border-color')}}
+                },
+                yAxis: {
+                    type: 'value',
+                    name: numericCols[0] || '数值',
+                    nameTextStyle: {color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary')},
+                    axisLabel: {color: getComputedStyle(document.documentElement).getPropertyValue('--text-primary')},
+                    splitLine: {
+                        lineStyle: {
+                            color: getComputedStyle(document.documentElement).getPropertyValue('--border-color'),
+                            type: 'dashed'
+                        }
+                    }
+                },
+                series: series,
+                legend: {
+                    data: numericCols,
+                    textStyle: {color: getComputedStyle(document.documentElement).getPropertyValue('--text-primary')},
+                    itemWidth: 25
+                },
+                backgroundColor: 'transparent'
+            };
+
+            myChart.setOption(option);
+            window.addEventListener('resize', () => myChart.resize());
+
+            return myChart;
+        }
+
+        function scrollToBottom() {
+            if (!messagesContainer) return;
+            setTimeout(() => {
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }, 10);
+            requestAnimationFrame(() => {
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            });
+        }
+
+        function renderModernTable(columns, rows, msgIndex) {
+            const chartId = `chart-${msgIndex}-${Date.now()}`;
+            let tableHtml = `
+                <div class="data-actions">
+                    <button class="data-btn" onclick="window.copyTableData(${msgIndex})">📋 复制表格</button>
+                    <button class="data-btn" onclick="window.exportTableData(${msgIndex})">📥 导出CSV</button>
+                    <button class="data-btn" onclick="window.showChart(${msgIndex}, '${chartId}')">📊 可视化图表</button>
+                </div>
+                <div class="modern-table-wrapper">
+                    <table class="modern-table">
+                        <thead><tr>
+            `;
+            for (let col of columns) {
+                tableHtml += `<th>${escapeHtml(col)}</th>`;
+            }
+            tableHtml += `</tr></thead><tbody>`;
+            for (let row of rows) {
+                tableHtml += `<tr>`;
+                for (let col of columns) {
+                    let cellValue = row[col] !== undefined && row[col] !== null ? row[col] : '';
+                    const isNumber = typeof cellValue === 'number';
+                    const align = isNumber ? 'right' : 'left';
+                    tableHtml += `<td style="text-align: ${align}">${escapeHtml(String(cellValue))}</td>`;
+                }
+                tableHtml += `</tr>`;
+            }
+            tableHtml += `</tbody></table></div><div id="${chartId}" class="chart-container" style="display: none;"></div>`;
+            return tableHtml;
+        }
+
+        function renderMessages() {
+            if (!messagesListEl) return;
+
+            if (!messages.length) {
+                messagesListEl.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">✨🤖✨</div>
+                        <h3 style="margin-bottom: 12px;">智能数据助手</h3>
+                        <p style="color: var(--text-secondary);">输入问题，开始数据探索之旅</p>
+                        <div class="recommend-questions">
+                            <div class="recommend-card" data-question="统计华北地区的销售总额">📊 统计华北地区销售总额</div>
+                            <div class="recommend-card" data-question="各个地区的销售额排名">🏆 各地区销售额排名</div>
+                            <div class="recommend-card" data-question="近30天销售趋势">📈 近30天销售趋势</div>
+                            <div class="recommend-card" data-question="用户活跃度分析">👥 用户活跃度分析</div>
+                        </div>
+                    </div>
+                `;
+                document.querySelectorAll('.recommend-card').forEach(card => {
+                    card.addEventListener('click', () => {
+                        const question = card.getAttribute('data-question');
+                        if (question && !loading) {
+                            inputEl.value = question;
+                            sendQuestion();
+                        }
+                    });
+                });
+                scrollToBottom();
+                return;
+            }
+
+            let html = '';
+            for (let i = 0; i < messages.length; i++) {
+                const msg = messages[i];
+                const roleClass = msg.role === 'user' ? 'user' : 'assistant';
+                const avatarIcon = msg.role === 'user' ? '🧑' : '🤖';
+                let bubbleContent = '';
+
+                if (msg.type === 'text') {
+                    bubbleContent = `<div class="plain-text">${escapeHtml(msg.content)}</div>`;
+                } else if (msg.type === 'steps') {
+                    let stepsHtml = '<div class="steps-container">';
+                    if (msg.steps && msg.steps.length) {
+                        for (let s of msg.steps) {
+                            let percent = s.status === 'running' ? 50 : (s.status === 'success' ? 100 : 0);
+                            stepsHtml += `
+                                <div class="step-item">
+                                    <div class="circular-progress" style="background: conic-gradient(var(--accent) ${percent * 3.6}deg, var(--step-bg) ${percent * 3.6}deg);"></div>
+                                    <span class="step-text">${escapeHtml(s.text)}</span>
+                                </div>
+                            `;
+                        }
+                    } else {
+                        stepsHtml += '<div class="skeleton-thinking"><div class="loading-spinner"></div> 思考中...</div>';
+                    }
+                    stepsHtml += '</div>';
+                    bubbleContent = stepsHtml;
+                } else if (msg.type === 'table') {
+                    if (msg.columns && msg.rows && msg.rows.length) {
+                        bubbleContent = renderModernTable(msg.columns, msg.rows, i);
+                    } else {
+                        bubbleContent = '<div style="color: var(--text-secondary);">暂无数据</div>';
+                    }
+                } else if (msg.type === 'loading') {
+                    bubbleContent = '<div class="skeleton-thinking"><div class="loading-spinner"></div> 思考中...</div>';
+                } else if (msg.type === 'error') {
+                    bubbleContent = `<div class="plain-text" style="color:#ef4444;">⚠️ ${escapeHtml(msg.content)}</div>`;
+                }
+
+                html += `
+                    <div class="message-row ${roleClass}" data-msg-idx="${i}">
+                        <div class="avatar">${avatarIcon}</div>
+                        <div class="bubble">
+                            ${bubbleContent}
+                        </div>
+                    </div>
+                `;
+            }
+            messagesListEl.innerHTML = html;
+            scrollToBottom();
+        }
+
+        window.copyTableData = (idx) => {
+            const msg = messages[idx];
+            if (msg && msg.type === 'table') {
+                const text = msg.rows.map(row => msg.columns.map(col => row[col]).join('\t')).join('\n');
+                copyToClipboard(text);
+            }
+        };
+
+        window.exportTableData = (idx) => {
+            const msg = messages[idx];
+            if (msg && msg.type === 'table') {
+                exportToCSV(msg.columns, msg.rows, `data_${Date.now()}.csv`);
+            }
+        };
+
+        window.showChart = (idx, chartId) => {
+            const msg = messages[idx];
+            if (!msg || msg.type !== 'table') return;
+            if (typeof echarts === 'undefined') {
+                showToast('📊 图表库加载中，请稍后再试');
+                return;
+            }
+            const chartContainer = document.getElementById(chartId);
+            if (!chartContainer) return;
+
+            if (chartContainer.style.display === 'none') {
+                chartContainer.style.display = 'block';
+                const firstCol = msg.columns[0];
+                renderChart(chartId, msg.columns, msg.rows, firstCol);
+                showToast('📊 图表已加载');
+            } else {
+                chartContainer.style.display = 'none';
+            }
+        };
+
+        function clearMessages() {
+            showModal({
+                title: '🗑️ 清空对话',
+                message: '确定要清空所有对话记录吗？此操作不可撤销。',
+                confirmText: '清空',
+                cancelText: '取消',
+                isDanger: true,
+                onConfirm: () => {
+                    messages = [];
+                    renderMessages();
+                    showToast('✅ 对话已清空');
+                }
+            });
+        }
+
+        async function sendQuestion() {
+            if (loading) return;
+            const q = inputEl.value.trim();
+            if (!q) return;
+
+            inputEl.value = '';
+            loading = true;
+            updateSendButtonState();
+
+            messages.push({role: 'user', type: 'text', content: q});
+            messages.push({role: 'assistant', type: 'loading'});
+            renderMessages();
+
+            const loadingIndex = messages.length - 1;
+
+            const requestBody = {query: q};
+            if (requestId) {
+                requestBody.request_id = requestId;
+            }
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify(requestBody),
+                });
+
+                if (!response.body) throw new Error("服务器未返回流");
+
+                messages.splice(loadingIndex, 1);
+                const stepsMsgIndex = messages.push({role: 'assistant', type: 'steps', steps: []}) - 1;
+                renderMessages();
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder("utf-8");
+                let buffer = "";
+
+                while (true) {
+                    const {value, done} = await reader.read();
+                    if (done) break;
+
+                    buffer += decoder.decode(value, {stream: true});
+                    const events = buffer.split("\n\n");
+                    buffer = events.pop();
+
+                    for (const evt of events) {
+                        const line = evt.trim();
+                        if (!line.startsWith("data:")) continue;
+                        let data;
+                        try {
+                            data = JSON.parse(line.replace(/^data:\s*/, ""));
+                        } catch (e) {
+                            continue;
+                        }
+
+                        if (data.type === "progress") {
+                            const curStepsMsg = messages[stepsMsgIndex];
+                            if (curStepsMsg && curStepsMsg.type === 'steps') {
+                                let stepList = curStepsMsg.steps;
+                                let step = stepList.find(s => s.text === data.step);
+                                if (!step) {
+                                    step = {text: data.step, status: data.status};
+                                    stepList.push(step);
+                                } else {
+                                    step.status = data.status;
+                                }
+                                renderMessages();
+                            }
+                        } else if (data.type === "result" && Array.isArray(data.data)) {
+                            const columns = data.data.length > 0 ? Object.keys(data.data[0]) : [];
+                            messages.push({
+                                role: "assistant",
+                                type: "table",
+                                columns: columns,
+                                rows: data.data,
+                            });
+                            renderMessages();
+                        } else if (data.type === "error") {
+                            messages.push({
+                                role: "assistant",
+                                type: "error",
+                                content: data.message || "执行查询时发生错误",
+                            });
+                            renderMessages();
+                        }
+                    }
+                }
+            } catch (err) {
+                messages.splice(loadingIndex, 1);
+                messages.push({
+                    role: "assistant",
+                    type: "error",
+                    content: err?.message || "网络请求失败，请检查后端服务",
+                });
+                renderMessages();
+            } finally {
+                loading = false;
+                updateSendButtonState();
+                scrollToBottom();
+            }
+        }
+
+        function updateSendButtonState() {
+            if (sendBtn) sendBtn.disabled = loading;
+            if (inputEl) inputEl.disabled = loading;
+        }
+
+        function onInputKeydown(e) {
+            if (e.key === 'Enter' && !e.shiftKey && !loading) {
+                e.preventDefault();
+                sendQuestion();
+            }
+        }
+
+        function initUI() {
+            const root = document.getElementById('chatRoot');
+            if (!root) return;
+
+            root.innerHTML = `
+                <div class="chat-app">
+                    <div class="chat-header">
+                        <span class="header-title">🤖 AI 智能数据助手</span>
+                        <div class="header-controls">
+                            <button class="config-btn" id="configBtn">⚙️ 配置</button>
+                            <button class="theme-toggle" id="themeToggle">🌙 深色</button>
+                        </div>
+                    </div>
+                    <div class="messages-container" id="messagesContainer">
+                        <div class="messages-list" id="messagesList"></div>
+                        <div class="bottom-spacer"></div>
+                    </div>
+                    <div class="input-float">
+                        <div class="input-card">
+                            <input type="text" id="chatInput" placeholder="输入问题，或点击🎤语音输入..." autocomplete="off" />
+                            <button class="icon-btn mic-btn" id="micBtn" title="语音输入">🎤</button>
+                            <button class="icon-btn clear-btn" id="clearBtn" title="清空对话">🗑️</button>
+                            <button class="send-btn" id="sendButton">发送</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            messagesContainer = document.getElementById('messagesContainer');
+            messagesListEl = document.getElementById('messagesList');
+            inputEl = document.getElementById('chatInput');
+            sendBtn = document.getElementById('sendButton');
+            micBtn = document.getElementById('micBtn');
+            clearBtn = document.getElementById('clearBtn');
+            themeToggle = document.getElementById('themeToggle');
+            configBtn = document.getElementById('configBtn');
+
+            if (inputEl) inputEl.addEventListener('keydown', onInputKeydown);
+            if (sendBtn) sendBtn.addEventListener('click', () => sendQuestion());
+            if (micBtn) {
+                recognition = initSpeechRecognition();
+                micBtn.addEventListener('click', startVoiceInput);
+            }
+            if (clearBtn) clearBtn.addEventListener('click', clearMessages);
+            if (themeToggle) themeToggle.addEventListener('click', toggleTheme);
+            if (configBtn) configBtn.addEventListener('click', showConfigModal);
+
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            setTheme(savedTheme);
+
+            renderMessages();
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initUI);
+        } else {
+            initUI();
+        }
+    })();
+</script>
+</body>
+</html>
