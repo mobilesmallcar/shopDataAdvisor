@@ -14,61 +14,12 @@ from app.models import ColumnInfoQdrant, MetricInfoQdrant, ValueInfoES
 # 仓库导入
 from app.repositories import ColumnQdrantRepository, MetricQdrantRepository, ValueESRepository
 
-T = TypeVar("T")
-Repo = TypeVar("Repo")
+T = TypeVar("T", bound=ValueInfoES | ColumnInfoQdrant | MetricInfoQdrant)
+Repo = TypeVar("Repo", bound=ColumnQdrantRepository | MetricQdrantRepository | ValueESRepository)
 
 
 # --------------------------
-# 1. 仓库获取器（从 runtime 中获取对应仓库）
-# --------------------------
-def get_column_repo(runtime: Runtime[DataAgentContext]) -> ColumnQdrantRepository:
-    return runtime.context.client_manager.column_qdrant_repository
-
-
-def get_metric_repo(runtime: Runtime[DataAgentContext]) -> MetricQdrantRepository:
-    return runtime.context.client_manager.metric_qdrant_repository
-
-
-def get_value_repo(runtime: Runtime[DataAgentContext]) -> ValueESRepository:
-    return runtime.context.client_manager.full_text_repository
-
-
-# --------------------------
-# 2. 具体搜索函数
-# --------------------------
-async def search_column(
-        repo: ColumnQdrantRepository,
-        keyword: str,
-        score: float,
-        limit: int,
-        embedding: HuggingFaceEmbeddings
-) -> List[ColumnInfoQdrant]:
-    vec = await embedding.aembed_query(keyword)
-    return await repo.search(vec, score, limit)
-
-
-async def search_metric(
-        repo: MetricQdrantRepository,
-        keyword: str,
-        score: float,
-        limit: int,
-        embedding: HuggingFaceEmbeddings
-) -> List[MetricInfoQdrant]:
-    vec = await embedding.aembed_query(keyword)
-    return await repo.search(vec, score, limit)
-
-
-async def search_value(
-        repo: ValueESRepository,
-        keyword: str,
-        score: float,
-        limit: int
-) -> List[ValueInfoES]:
-    return await repo.query(keyword, score, limit)
-
-
-# --------------------------
-# 3. 通用召回节点装饰器
+#  通用召回节点装饰器
 # --------------------------
 def recall_node(
         repo_getter: Callable[[Runtime[DataAgentContext]], Repo],
