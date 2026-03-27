@@ -13,34 +13,7 @@ from app.prompt.prompt_loader import load_prompt
 filter_T = TypeVar("filter_T", bound=TableInfoState | MetricInfoState)  # 泛型：TableInfoState / MetricInfoState
 
 
-def llm_invoke(
-        prompt_name: str,
-        param_builder: Callable[[DataAgentState], dict[str, Any]]
-):
-    """调用大模型"""
 
-    def decorator(func):
-        @functools.wraps(func)
-        async def wrapper(state: DataAgentState, runtime: Runtime[DataAgentContext], *args, **kwargs) -> str:
-            # 1. 构建参数
-            invoke_params = param_builder(state)
-            # 2. 构建提示词
-            prompt = PromptTemplate(
-                template=load_prompt(prompt_name),
-                input_variables=list(invoke_params.keys())
-            )
-            # 3. 构建链
-            chain = prompt | llm_client | JsonOutputParser()
-
-            # 4. 调用大模型
-            result = await chain.ainvoke(invoke_params)
-
-            # 5. 返回
-            return await func(state, runtime, result, *args, **kwargs)
-
-        return wrapper
-
-    return decorator
 
 
 def filter_list(get_item_list: Callable[[DataAgentState], list[filter_T]]):
