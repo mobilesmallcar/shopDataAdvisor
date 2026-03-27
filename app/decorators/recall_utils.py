@@ -4,19 +4,15 @@ from pprint import pformat
 from langgraph.runtime import Runtime
 from langchain_huggingface import HuggingFaceEmbeddings
 
-from app.core.base_log import logger
+from app.core import logger
 from app.agent.state import DataAgentState
 from app.agent.context import DataAgentContext
 
 # 模型导入
-from app.models.qdrant.column_info_qdrant import ColumnInfoQdrant
-from app.models.qdrant.metric_info_qdrant import MetricInfoQdrant
-from app.models.es.value_info_es import ValueInfoES
+from app.models import ColumnInfoQdrant, MetricInfoQdrant, ValueInfoES
 
 # 仓库导入
-from app.repositories.qdrant.column_qdrant_repository import ColumnQdrantRepository
-from app.repositories.qdrant.metric_qdrant_repository import MetricQdrantRepository
-from app.repositories.es.value_es_repository import ValueESRepository
+from app.repositories import ColumnQdrantRepository, MetricQdrantRepository, ValueESRepository
 
 T = TypeVar("T")
 Repo = TypeVar("Repo")

@@ -1,11 +1,12 @@
 import json
 
-from fastapi import FastAPI, APIRouter, Depends
+from fastapi import APIRouter, Depends
 from starlette.responses import StreamingResponse
 
 from app.api.dependencies import get_chat_service
-from app.schemas.chat import QuerySchema
-from app.service.chat_service import ChatService
+
+from app.schemas import QuerySchema
+from app.service import ChatService
 
 # 定义router
 chat_router = APIRouter()

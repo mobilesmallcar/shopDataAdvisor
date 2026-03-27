@@ -3,9 +3,9 @@ from argparse import ArgumentParser
 
 from pathlib import Path
 
-from app.schemas.meta_client_manager_schemas import MetaClientManger
-from app.service.BaseService import with_meta_clients
-from app.service.meta_knowledge_service import MetaKnowledgeService
+from app.schemas import MetaClientManger
+from app.decorators import with_meta_clients
+from app.service import MetaKnowledgeService
 
 
 @with_meta_clients

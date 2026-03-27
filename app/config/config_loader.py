@@ -1,7 +1,7 @@
 from pathlib import Path
-from typing import Type, TypeVar, Union
+from typing import Type, TypeVar
 
-from omegaconf import OmegaConf, DictConfig
+from omegaconf import OmegaConf
 
 T = TypeVar("T")
 

@@ -3,8 +3,8 @@ from typing import Optional
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession, AsyncEngine
 
+from app.core import logger
 from app.config.app_config import DBConfig, app_config
-from app.core.base_log import logger
 
 
 class MySQLClientManager:

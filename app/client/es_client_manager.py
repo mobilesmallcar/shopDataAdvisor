@@ -1,8 +1,8 @@
 import asyncio
 from elasticsearch import AsyncElasticsearch
 
+from app.core import logger
 from app.config.app_config import ESConfig, app_config
-from app.core.base_log import logger
 
 
 class ESClientManager:

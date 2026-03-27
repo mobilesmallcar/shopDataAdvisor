@@ -1,7 +1,7 @@
 from elasticsearch import AsyncElasticsearch
 
-from app.core.base_log import logger
-from app.models.es.value_info_es import ValueInfoES
+from app.core import logger
+from app.models import ValueInfoES
 from elasticsearch.helpers import async_bulk
 
 
@@ -92,7 +92,7 @@ class ValueESRepository:
 if __name__ == '__main__':
     import asyncio
     from app.schemas.meta_client_manager_schemas import MetaClientManger
-    from app.service.BaseService import with_meta_clients
+    from app.decorators.meta_client_manager_utils import with_meta_clients
 
 
     @with_meta_clients

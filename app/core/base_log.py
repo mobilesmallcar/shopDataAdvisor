@@ -4,7 +4,7 @@ import os
 import logging
 from pathlib import Path
 
-from loguru import logger
+from loguru import logger # 必须保留
 
 from app.config.app_config import app_config
 from app.core.context import request_id_ctx_var
@@ -90,7 +90,6 @@ disable_noise_logs()
 from loguru._logger import Logger
 
 logger: Logger
-__all__ = ["logger"]
 
 if __name__ == '__main__':
     logger.info("hello world")

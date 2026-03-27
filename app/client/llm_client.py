@@ -1,8 +1,10 @@
 import asyncio
 from typing import Optional
-from langchain_core.language_models import BaseChatModel
-from langchain_core.utils import convert_to_secret_str
+
 from langchain_openai import ChatOpenAI
+from langchain_core.utils import convert_to_secret_str
+from langchain_core.language_models import BaseChatModel
+
 from app.config.app_config import app_config
 
 # 全局 LLM 单例
@@ -29,8 +31,6 @@ def _get_llm() -> BaseChatModel:
 
 # 初始化
 llm_client = _get_llm()
-
-__all__ = ["llm_client"]
 
 if __name__ == "__main__":
     async def test():

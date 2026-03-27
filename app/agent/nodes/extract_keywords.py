@@ -1,7 +1,7 @@
 import jieba.analyse
 from langgraph.runtime import Runtime
 
-from app.core.base_log import logger
+from app.core import logger
 from app.agent.state import DataAgentState
 from app.agent.context import DataAgentContext
 

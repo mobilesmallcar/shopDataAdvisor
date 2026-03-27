@@ -1,7 +1,7 @@
 from langchain_huggingface import HuggingFaceEndpointEmbeddings, HuggingFaceEmbeddings
 
+from app.core import logger
 from app.config.app_config import EmbeddingConfig, app_config
-from app.core.base_log import logger
 
 
 class EmbeddingClientManager:

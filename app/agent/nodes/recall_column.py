@@ -1,10 +1,26 @@
+from langchain_huggingface import HuggingFaceEmbeddings
 from langgraph.runtime import Runtime
 
-from app.agent.context import DataAgentContext
-from app.agent.nodes.decorator_utils.llm_utils import llm_invoke
-from app.agent.nodes.decorator_utils.recall_utils import recall_node, get_column_repo, search_column
 from app.agent.state import DataAgentState
-from app.models.qdrant.column_info_qdrant import ColumnInfoQdrant
+from app.agent.context import DataAgentContext
+
+# 导入模型
+from app.models import ColumnInfoQdrant
+# 导入仓库
+from app.repositories import ColumnQdrantRepository
+# 导入装饰器
+from app.decorators import recall_node, llm_invoke
+
+# 仓库搜索相关信息
+async def search_column(
+        repo: ColumnQdrantRepository,
+        keyword: str,
+        score: float,
+        limit: int,
+        embedding: HuggingFaceEmbeddings
+) -> list[ColumnInfoQdrant]:
+    vec = await embedding.aembed_query(keyword)
+    return await repo.search(vec, score, limit)
 
 
 @llm_invoke(
@@ -14,7 +30,7 @@ from app.models.qdrant.column_info_qdrant import ColumnInfoQdrant
     }
 )
 @recall_node(
-    repo_getter=get_column_repo,
+    repo_getter=lambda runtime: runtime.context.client_manager.column_qdrant_repository,
     search_func=search_column,
     model_cls=ColumnInfoQdrant,
     need_embedding=True,

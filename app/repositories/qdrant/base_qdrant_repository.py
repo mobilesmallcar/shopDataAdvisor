@@ -3,8 +3,8 @@ from typing import TypeVar, Generic, Type
 from qdrant_client import AsyncQdrantClient
 from qdrant_client.models import VectorParams, Distance, PointStruct
 
+from app.core import logger
 from app.config.app_config import app_config
-from app.core.base_log import logger
 
 T = TypeVar('T')
 

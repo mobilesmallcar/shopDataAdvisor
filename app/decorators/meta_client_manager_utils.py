@@ -1,18 +1,14 @@
-from pathlib import Path
 from functools import wraps
 
-from app.core.base_log import logger
-from app.client.es_client_manager import es_client_manager
-from app.client.embedding_client import embedding_client_manager
-from app.client.qdrant_client_manager import qdrant_client_manager
-from app.client.mysql_client_manager import dw_client_manager, meta_client_manager, MySQLClientManager
+from app.core import logger
 from app.core.context import request_id_ctx_var
-from app.repositories.es.value_es_repository import ValueESRepository
-from app.repositories.mysql.dw_mysql_repository import DWMysqlRepository
-from app.repositories.mysql.meta_mysql_repository import MetaMysqlRepository
-from app.repositories.qdrant.column_qdrant_repository import ColumnQdrantRepository
-from app.repositories.qdrant.metric_qdrant_repository import MetricQdrantRepository
-from app.schemas.meta_client_manager_schemas import MetaClientManger
+
+# 导入客户端
+from app.client import *
+# 导入仓库
+from app.repositories import *
+# 导入管理器
+from app.schemas import MetaClientManger
 
 
 def with_meta_clients(func):

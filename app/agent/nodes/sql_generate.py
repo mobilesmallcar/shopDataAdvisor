@@ -1,10 +1,12 @@
 from typing import Any
-
 from langgraph.runtime import Runtime
+
+from app.core import logger
 from app.agent.state import DataAgentState
 from app.agent.context import DataAgentContext
-from app.agent.nodes.decorator_utils.llm_utils import llm_invoke
-from app.core.base_log import logger
+
+# 导入装饰器
+from app.decorators import llm_invoke
 
 
 def build_generate_sql_params(state: DataAgentState) -> dict[str, Any]:

@@ -1,5 +1,3 @@
-from app.client.embedding_client import embedding_client_manager
-from app.client.qdrant_client_manager import qdrant_client_manager
 from app.models.qdrant.column_info_qdrant import ColumnInfoQdrant
 from app.repositories.qdrant.base_qdrant_repository import BaseQdrantRepository
 
@@ -15,7 +13,7 @@ class ColumnQdrantRepository(BaseQdrantRepository[ColumnInfoQdrant]):
 if __name__ == '__main__':
     import asyncio
     from app.schemas.meta_client_manager_schemas import MetaClientManger
-    from app.service.BaseService import with_meta_clients
+    from app.decorators.meta_client_manager_utils import with_meta_clients
 
 
     @with_meta_clients

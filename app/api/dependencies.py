@@ -1,18 +1,16 @@
 from fastapi import Depends
 from langgraph.graph.state import CompiledStateGraph
 
-from app.agent.graph import graph_app
-from app.client.embedding_client import embedding_client_manager
-from app.client.es_client_manager import es_client_manager
-from app.client.mysql_client_manager import dw_client_manager, meta_client_manager
-from app.client.qdrant_client_manager import qdrant_client_manager
-from app.repositories.es.value_es_repository import ValueESRepository
-from app.repositories.mysql.dw_mysql_repository import DWMysqlRepository
-from app.repositories.mysql.meta_mysql_repository import MetaMysqlRepository
-from app.repositories.qdrant.column_qdrant_repository import ColumnQdrantRepository
-from app.repositories.qdrant.metric_qdrant_repository import MetricQdrantRepository
-from app.schemas.meta_client_manager_schemas import MetaClientManger
-from app.service.chat_service import ChatService
+from app.agent import graph_app
+
+# 导入客户端
+from app.client import *
+# 导入仓库
+from app.repositories import *
+# 导入管理器
+from app.schemas import MetaClientManger
+# 导入service
+from app.service import ChatService
 
 
 # 获取 Meta session
@@ -27,6 +25,7 @@ async def _get_dw_session():
         yield session
 
 
+# 构建客户端管理器
 async def _get_client_manager(
         dw_session=Depends(_get_dw_session),
         meta_session=Depends(_get_meta_session),
@@ -41,6 +40,7 @@ async def _get_client_manager(
     )
 
 
+# 构建
 async def _get_graph():
     return graph_app
 
@@ -51,5 +51,3 @@ async def get_chat_service(
 ) -> ChatService:
     # 创建服务实例
     return ChatService(graph=graph, client_manager=client_manager)
-
-

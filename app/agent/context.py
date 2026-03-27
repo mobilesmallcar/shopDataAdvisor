@@ -2,7 +2,8 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-from app.schemas.meta_client_manager_schemas import MetaClientManger
+# 导入客户端管理
+from app.schemas import MetaClientManger
 
 
 class DataAgentContext(BaseModel):

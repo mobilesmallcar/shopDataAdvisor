@@ -3,10 +3,7 @@ from typing import Sequence
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.mysql.column_info_mysql import ColumnInfoMySQL
-from app.models.mysql.column_metric_mysql import ColumnMetricMySQL
-from app.models.mysql.metric_info_mysql import MetricInfoMySQL
-from app.models.mysql.table_info_mysql import TableInfoMySQL
+from app.models import TableInfoMySQL, ColumnInfoMySQL, MetricInfoMySQL, ColumnMetricMySQL
 
 
 class MetaMysqlRepository:

@@ -2,9 +2,8 @@ from typing import Optional, Any
 
 from pydantic import BaseModel, ConfigDict
 
-from app.models.es.value_info_es import ValueInfoES
-from app.models.qdrant.column_info_qdrant import ColumnInfoQdrant
-from app.models.qdrant.metric_info_qdrant import MetricInfoQdrant
+# 导入模型
+from app.models import ColumnInfoQdrant, MetricInfoQdrant, ValueInfoES
 
 
 class _BaseInfoState(BaseModel):

@@ -2,7 +2,7 @@ import asyncio
 from qdrant_client import AsyncQdrantClient
 from qdrant_client.http.models import Distance, VectorParams
 
-from app.core.base_log import logger
+from app.core import logger
 from app.config.app_config import QdrantConfig, app_config
 
 
