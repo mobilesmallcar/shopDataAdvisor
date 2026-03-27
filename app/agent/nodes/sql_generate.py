@@ -1,12 +1,32 @@
 import asyncio
+from typing import Any
 
 from langgraph.runtime import Runtime
-
 from app.agent.state import DataAgentState
 from app.agent.context import DataAgentContext
+from app.agent.nodes.decorator_utils.llm_utils import llm_invoke
+from app.core.base_log import logger
 
 
-async def generate_sql(state: DataAgentState, runtime: Runtime[DataAgentContext]):
+def build_generate_sql_params(state: DataAgentState) -> dict[str, Any]:
+    return {
+        "query": state.query,
+        "metric_infos": state.metric_infos,
+        "table_infos": state.table_infos,
+        "date_info": state.date_info,
+        "db_info": state.db_info
+    }
+
+
+@llm_invoke(
+    prompt_name="generate_sql",
+    param_builder=build_generate_sql_params,
+    enable_text=True
+)
+async def generate_sql(state: DataAgentState, runtime: Runtime[DataAgentContext], result: str):
     writer = runtime.stream_writer
     writer("SQL生成")
-    await asyncio.sleep(1)
+
+    # 返回
+    logger.info(f"SQL生成结果：{result}")
+    return {"sql": result}

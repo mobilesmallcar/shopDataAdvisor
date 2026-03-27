@@ -48,3 +48,25 @@ class DWMysqlRepository:
         """)
         result = await self.dw_session.execute(sql)
         return [row.column_name for row in result.fetchall()]
+
+    async def get_db_info(self):
+        """
+        获取数据仓信息
+        Returns: 数据仓信息
+
+        """
+        dialect = self.dw_session.get_bind().dialect.name
+
+        sql = text("SELECT version() as version")
+
+        result = await self.dw_session.execute(sql)
+        version = result.scalar().strip()
+
+        return {"dialect": dialect, "version": version}
+
+    async def validate_sql(self, sql):
+        await self.dw_session.execute(text(f"EXPLAIN {sql}"))
+
+    async def execute_sql(self, sql):
+        result = await self.dw_session.execute(text(sql))
+        return [dict(row) for row in result.mappings().fetchall()]

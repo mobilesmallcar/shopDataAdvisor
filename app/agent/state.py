@@ -36,11 +36,21 @@ class MetricInfoState(_BaseInfoState):
     alias: list[str]  # 指标别名
 
 
+class DateInfoState(_BaseInfoState):
+    date: str
+    weekday: str
+    quarter: str
+
+
+class DBInfoState(_BaseInfoState):
+    dialect: str  # 数据库方言
+    version: str  # 数据库版本
+
+
 class DataAgentState(BaseModel):
     query: str  # 查询
 
     keywords: list[str] = []  # 关键词列表，由query分词和LLM生成得到，用于召回信息
-    error: Optional[str] = None
 
     # 召回信息
     retrieved_columns: list[ColumnInfoQdrant] = []
@@ -50,3 +60,10 @@ class DataAgentState(BaseModel):
     # 合并信息
     table_infos: list[TableInfoState] = []
     metric_infos: list[MetricInfoState] = []
+
+    # sql信息
+    date_info: DateInfoState = None
+    db_info: DBInfoState = None
+
+    sql: str = ""
+    error: Optional[str] = None
