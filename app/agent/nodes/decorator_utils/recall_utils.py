@@ -79,7 +79,6 @@ async def search_value(
 # 3. 通用召回节点装饰器
 # --------------------------
 def recall_node(
-        prompt_name: str,
         repo_getter: Callable[[Runtime[DataAgentContext]], Repo],
         search_func: Callable,
         model_cls: type[T],
@@ -87,28 +86,19 @@ def recall_node(
         display_name: str = ""
 ):
     def decorator(func: Callable[[DataAgentState, Runtime[DataAgentContext], Dict[str, T]], Awaitable[dict]]):
-        async def wrapper(state: DataAgentState, runtime: Runtime[DataAgentContext]) -> dict:
+        async def wrapper(state: DataAgentState, runtime: Runtime[DataAgentContext], llm_result: list[str]) -> dict:
             writer = runtime.stream_writer
             writer(f"召回{display_name}")
 
             retrieved_key = f"retrieved_{model_cls.__name__.lower()}"
-            query = state.query
+            # query = state.query
             keywords = state.keywords
             repo = repo_getter(runtime)
 
             try:
-                # 构建链
-                prompt = PromptTemplate(
-                    template=load_prompt(prompt_name),
-                    input_variables=["query"]
-                )
-                chain = prompt | llm_client | JsonOutputParser()
-
-                # 大模型扩展关键词
-                result_content = await chain.ainvoke({"query": query})
                 logger.debug(f"召回{display_name}keywords: {keywords}")
-                logger.debug(f"召回{display_name}大模型抽取的关键字参数{result_content}")
-                keywords = list(set(keywords + result_content))
+                logger.debug(f"召回{display_name}大模型抽取的关键字参数{llm_result}")
+                keywords = list(set(keywords + llm_result))
                 logger.debug(f"召回{display_name}合并后参数{keywords}")
                 # 获取 embedding（如果需要）
                 embedding = None

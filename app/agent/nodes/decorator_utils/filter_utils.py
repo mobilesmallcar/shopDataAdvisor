@@ -13,9 +13,6 @@ from app.prompt.prompt_loader import load_prompt
 filter_T = TypeVar("filter_T", bound=TableInfoState | MetricInfoState)  # 泛型：TableInfoState / MetricInfoState
 
 
-
-
-
 def filter_list(get_item_list: Callable[[DataAgentState], list[filter_T]]):
     """
     列表过滤装饰器：根据名称过滤实体列表

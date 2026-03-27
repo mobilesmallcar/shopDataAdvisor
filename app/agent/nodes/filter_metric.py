@@ -1,5 +1,3 @@
-from typing import Any
-
 from langgraph.runtime import Runtime
 from app.agent.nodes.decorator_utils.llm_utils import llm_invoke
 from app.agent.nodes.decorator_utils.filter_utils import filter_list, log_filter
@@ -11,16 +9,12 @@ def get_metric_list(state: DataAgentState) -> list[MetricInfoState]:
     return state.metric_infos
 
 
-def build_metric_params(state: DataAgentState) -> dict[str, Any]:
-    return {
+@llm_invoke(
+    prompt_name="filter_metric_info",
+    param_builder=lambda state: {
         "query": state.query,
         "metric_infos": get_metric_list(state)
     }
-
-
-@llm_invoke(
-    prompt_name="filter_metric_info",
-    param_builder=build_metric_params  # 直接传方法！
 )
 @filter_list(get_item_list=get_metric_list)
 @log_filter(log_level="debug", enabled=True, print_log="过滤指标信息")

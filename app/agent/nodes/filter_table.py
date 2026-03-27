@@ -1,5 +1,3 @@
-from typing import Any
-
 from langgraph.runtime import Runtime
 from app.agent.nodes.decorator_utils.llm_utils import llm_invoke
 from app.agent.nodes.decorator_utils.filter_utils import filter_list, log_filter
@@ -11,16 +9,12 @@ def get_table_list(state: DataAgentState) -> list[TableInfoState]:
     return state.table_infos
 
 
-def build_table_params(state: DataAgentState) -> dict[str, Any]:
-    return {
+@llm_invoke(
+    prompt_name="filter_table_info",
+    param_builder=lambda state: {
         "query": state.query,
         "table_infos": get_table_list(state)
     }
-
-
-@llm_invoke(
-    prompt_name="filter_table_info",
-    param_builder=build_table_params  # 直接传方法！
 )
 @filter_list(get_item_list=get_table_list)
 @log_filter(log_level="debug", enabled=True, print_log="过滤表格信息")

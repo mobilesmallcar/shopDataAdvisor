@@ -1,13 +1,19 @@
 from langgraph.runtime import Runtime
 
 from app.agent.context import DataAgentContext
+from app.agent.nodes.decorator_utils.llm_utils import llm_invoke
 from app.agent.nodes.decorator_utils.recall_utils import recall_node, get_column_repo, search_column
 from app.agent.state import DataAgentState
 from app.models.qdrant.column_info_qdrant import ColumnInfoQdrant
 
 
-@recall_node(
+@llm_invoke(
     prompt_name="extend_keywords_for_column_recall",
+    param_builder=lambda state: {
+        "query": state.query,
+    }
+)
+@recall_node(
     repo_getter=get_column_repo,
     search_func=search_column,
     model_cls=ColumnInfoQdrant,
