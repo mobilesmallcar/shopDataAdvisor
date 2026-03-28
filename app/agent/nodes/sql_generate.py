@@ -1,3 +1,4 @@
+import yaml
 from typing import Any
 from langgraph.runtime import Runtime
 
@@ -12,10 +13,10 @@ from app.decorators import llm_invoke, writer_node
 def build_generate_sql_params(state: DataAgentState) -> dict[str, Any]:
     return {
         "query": state.query,
-        "metric_infos": state.metric_infos,
-        "table_infos": state.table_infos,
-        "date_info": state.date_info,
-        "db_info": state.db_info
+        "metric_infos": yaml.dump(state.metric_infos, allow_unicode=True, sort_keys=False),
+        "table_infos": yaml.dump(state.table_infos, allow_unicode=True, sort_keys=False),
+        "date_info": yaml.dump(state.date_info, allow_unicode=True, sort_keys=False),
+        "db_info": yaml.dump(state.db_info, allow_unicode=True, sort_keys=False),
     }
 
 
