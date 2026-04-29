@@ -11,27 +11,26 @@ class EmbeddingClientManager:
         self.config = config
         self.client: HuggingFaceEndpointEmbeddings | HuggingFaceEmbeddings | None = None
 
-    def _get_url(self):
-        addr = f"http://{self.config.host}:{self.config.port}"
-        # addr = "BAAI/bge-large-zh-v1.5"
-        addr = str(Path(__file__).parents[2] / "docker" / "embedding" / "bge-large-zh-v1.5")
-        logger.debug(f"[词嵌入]初始化地址:{addr}")
-        return addr
+    def _get_model_path(self):
+        model_name = self.config.model
+        # 优先使用本地目录: docker/embedding/<model_name>
+        local_path = Path(__file__).parents[2] / "docker" / "embedding" / model_name.replace("/", "_")
+        if local_path.exists():
+            logger.info(f"[词嵌入]使用本地模型:{local_path}")
+            return str(local_path)
+        # 回退到 HuggingFace Hub 模型名
+        logger.info(f"[词嵌入]本地模型不存在,从 HuggingFace 加载:{model_name}")
+        return model_name
 
     def init(self):
-        # self.client = HuggingFaceEndpointEmbeddings(model=self._get_url())
         self.client = HuggingFaceEmbeddings(
-            model_name=self._get_url(),
-            # model_kwargs={
-            #     "device": "cuda",  # 或 "cuda" 如果你有 GPU
-            #     "local_files_only": True,  # 强制只从本地加载，防止任何网络行为
-            # },
-            # encode_kwargs={
-            #     "normalize_embeddings": True,  # bge 系列通常需要归一化
-            #     "show_progress_bar": False,  # 编码时不显示进度条
-            # },
-            # # 重要：禁用模型加载时的进度条（对 sentence-transformers 有效）
-            # show_progress=False,
+            model_name=self._get_model_path(),
+            model_kwargs={
+                "device": "cpu",
+            },
+            encode_kwargs={
+                "normalize_embeddings": True,  # bge 系列需要归一化
+            },
         )
 
 
@@ -41,5 +40,5 @@ if __name__ == '__main__':
     client = EmbeddingClientManager(app_config.embedding)
     client.init()
     query = client.client.embed_query("hello world")
-    print(len(query))
-    print(query)
+    print(f"向量维度: {len(query)}")
+    print(query[:5])

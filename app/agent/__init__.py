@@ -1,5 +1,2 @@
-from app.agent.graph import graph_app
-
-__all__ = [
-    "graph_app"
-]
+# 避免包初始化时循环导入 graph，需要时直接从 app.agent.graph 导入
+__all__ = []

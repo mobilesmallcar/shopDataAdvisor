@@ -10,32 +10,32 @@ logging:
     level: DEBUG
 
 db_meta:
-  host: 192.168.10.131
-  port: 3306
+  host: 127.0.0.1
+  port: 3307
   user: shaw
   password: 123456
   database: meta
 
 db_dw:
-  host: 192.168.10.131
-  port: 3306
+  host: 127.0.0.1
+  port: 3307
   user: shaw
   password: 123456
   database: dw
 
 qdrant:
-  host: 192.168.10.131
+  host: 127.0.0.1
   port: 6333
-  embedding_size: 1024
+  embedding_size: 512
 
 embedding:
-  host: 192.168.10.131
+  host: 127.0.0.1
   port: 8081
-  model: BAAI/bge-large-zh-v1.5
+  model: BAAI/bge-small-zh-v1.5
 
 
 es:
-  host: 192.168.10.131
+  host: 127.0.0.1
   port: 9200
   index_name: data_agent
 

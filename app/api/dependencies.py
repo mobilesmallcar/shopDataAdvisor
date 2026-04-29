@@ -1,7 +1,7 @@
 from fastapi import Depends
 from langgraph.graph.state import CompiledStateGraph
 
-from app.agent import graph_app
+from app.agent.graph import graph_app
 
 # 导入客户端
 from app.client import *
