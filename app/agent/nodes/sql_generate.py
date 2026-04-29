@@ -32,4 +32,5 @@ async def generate_sql(state: DataAgentState, runtime: Runtime[DataAgentContext]
 
     # 返回
     logger.info(f"SQL生成结果：{result}")
+    writer({"sql": result})
     return {"sql": result}

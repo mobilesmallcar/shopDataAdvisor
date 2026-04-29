@@ -11,21 +11,21 @@ logging:
 
 db_meta:
   host: 127.0.0.1
-  port: 3307
+  port: 13306
   user: shaw
   password: 123456
   database: meta
 
 db_dw:
   host: 127.0.0.1
-  port: 3307
+  port: 13306
   user: shaw
   password: 123456
   database: dw
 
 qdrant:
   host: 127.0.0.1
-  port: 6333
+  port: 16333
   embedding_size: 512
 
 embedding:
@@ -36,7 +36,7 @@ embedding:
 
 es:
   host: 127.0.0.1
-  port: 9200
+  port: 19200
   index_name: data_agent
 
 

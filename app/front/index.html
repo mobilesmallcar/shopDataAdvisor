@@ -446,6 +446,7 @@
       color: #86EFAC; line-height: 1.75;
       white-space: pre-wrap; word-break: break-all; min-height: 56px;
       border: 1px solid var(--border-card);
+      height: auto; max-height: none; overflow: visible;
     }
     .sql-placeholder-txt { color: var(--text-4); font-style: italic; }
 
@@ -459,34 +460,27 @@
     }
     .copy-btn:hover { color: var(--text-1); background: var(--bg-elevated); }
 
-    /* entity tags */
-    .ent-group { margin-bottom: 12px; }
-    .ent-group:last-child { margin-bottom: 0; }
-    .ent-lbl {
-      font-size: 10px; font-weight: 600; letter-spacing: .09em;
-      text-transform: uppercase; color: var(--text-3); margin-bottom: 6px;
-    }
-    .ent-tags { display: flex; flex-wrap: wrap; gap: 5px; }
-    .tag {
-      padding: 3px 8px; border-radius: var(--r-sm);
-      font-size: 11.5px; font-weight: 500;
-    }
-    .tag-tbl {
-      background: rgba(99,102,241,.11); color: #A5B4FC;
-      border: 1px solid rgba(99,102,241,.2);
-    }
-    .tag-metric {
-      background: var(--accent-dim); color: var(--accent-text);
-      border: 1px solid rgba(201,154,46,.22);
-    }
-    .tag-col {
-      background: rgba(20,184,166,.09); color: #5EEAD4;
-      border: 1px solid rgba(20,184,166,.17);
-    }
-    .ent-none { font-size: 12px; color: var(--text-4); font-style: italic; }
-
-    /* follow-ups */
+    /* follow-ups */    /* follow-ups */
     .fu-list { display: flex; flex-direction: column; gap: 6px; }
+
+    /* ─── TOAST ─── */
+    .toast-container {
+      position: fixed; top: 66px; right: 20px; z-index: 9999;
+      display: flex; flex-direction: column; gap: 10px;
+      pointer-events: none;
+    }
+    .toast {
+      pointer-events: auto;
+      padding: 12px 18px; border-radius: var(--r);
+      font-size: 13px; font-weight: 500; color: #fff;
+      background: var(--error); box-shadow: 0 6px 24px rgba(0,0,0,.35);
+      transform: translateX(120%); opacity: 0;
+      transition: transform .35s cubic-bezier(.22,1,.36,1), opacity .35s ease;
+      max-width: 320px; line-height: 1.5;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .toast.show { transform: translateX(0); opacity: 1; }
+    .toast-icon { font-size: 15px; flex-shrink: 0; }
     .fu-item {
       padding: 8px 11px; border-radius: var(--r);
       background: var(--bg-elevated); border: 1px solid var(--border);
@@ -799,26 +793,6 @@
     </div>
 
     <!-- Entities -->
-    <div class="card">
-      <div class="card-hd">
-        <span class="card-hl">识别实体</span>
-      </div>
-      <div class="card-bd">
-        <div class="ent-group">
-          <div class="ent-lbl">数据表</div>
-          <div class="ent-tags" id="entTables"><span class="ent-none">待识别</span></div>
-        </div>
-        <div class="ent-group">
-          <div class="ent-lbl">指标</div>
-          <div class="ent-tags" id="entMetrics"><span class="ent-none">待识别</span></div>
-        </div>
-        <div class="ent-group">
-          <div class="ent-lbl">字段</div>
-          <div class="ent-tags" id="entCols"><span class="ent-none">待识别</span></div>
-        </div>
-      </div>
-    </div>
-
     <!-- Follow-ups -->
     <div class="card">
       <div class="card-hd">
@@ -876,7 +850,7 @@
       <div class="setting-group-title">接口地址</div>
       <div class="setting-row">
         <label class="setting-lbl">API Base URL</label>
-        <input class="setting-input" id="cfgApiBase" type="text" value="http://localhost:8000" placeholder="http://localhost:8000" />
+        <input class="setting-input" id="cfgApiBase" type="text" value="" placeholder="/api 或 http://host:port" />
       </div>
     </div>
 
@@ -899,7 +873,7 @@
 
 <script>
   // ─── CONFIG (mutable via settings) ───
-  let API_BASE   = localStorage.getItem('cfg_api_base')   || 'http://localhost:8000';
+  let API_BASE   = localStorage.getItem('cfg_api_base')   || '';
   let REQUEST_ID = localStorage.getItem('cfg_request_id') || 'Mobile_Car';
 
   // ─── PIPELINE DEFINITION ───
@@ -942,7 +916,7 @@
   let totalSteps  = ALL_STEPS.length;
   let chartInst   = null;
   let lastRows    = [];
-  let isDark      = localStorage.getItem('theme') !== 'light';
+  let isDark      = localStorage.getItem('theme') === 'dark';
 
   // ─── INIT ───
   (function init() {
@@ -1309,10 +1283,6 @@
       </div>`;
     document.getElementById('sqlCode').textContent = '-- 生成中…';
     document.getElementById('sqlCode').className = 'sql-placeholder-txt';
-    document.getElementById('entTables').innerHTML  = '<span class="ent-none">识别中…</span>';
-    document.getElementById('entMetrics').innerHTML = '<span class="ent-none">识别中…</span>';
-    document.getElementById('entCols').innerHTML    = '<span class="ent-none">识别中…</span>';
-
     renderPipeline();
 
     // Button state
@@ -1371,12 +1341,34 @@
     }
   }
 
+  function showToast(msg, type = 'warning') {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    const icon = type === 'warning' ? '⚠️' : 'ℹ️';
+    toast.innerHTML = `<span class="toast-icon">${icon}</span><span>${msg}</span>`;
+    container.appendChild(toast);
+    // trigger reflow
+    toast.offsetHeight;
+    toast.classList.add('show');
+    setTimeout(() => {
+      toast.classList.remove('show');
+      setTimeout(() => toast.remove(), 400);
+    }, 3500);
+  }
+
   function onDone(query) {
     clearInterval(timerHandle);
     const btn = document.getElementById('runBtn');
     btn.disabled = false;
     btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg> 重新分析`;
     document.getElementById('plBar').style.width = '100%';
+
+    // 检查是否生成了SQL
+    const sqlEl = document.getElementById('sqlCode');
+    if (sqlEl.classList.contains('sql-placeholder-txt') || !sqlEl.textContent.trim() || sqlEl.textContent.trim() === '-- 生成中…') {
+      showToast('当前内容无法生成SQL，请联系管理员', 'warning');
+    }
 
     // Generate contextual follow-ups
     const sug = [
@@ -1420,5 +1412,7 @@
     }
   }
 </script>
+  <!-- Toast container -->
+  <div class="toast-container" id="toastContainer"></div>
 </body>
 </html>

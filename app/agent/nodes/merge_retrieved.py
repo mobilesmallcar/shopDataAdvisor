@@ -36,10 +36,11 @@ async def merge_retrieved_info(state: DataAgentState, runtime: Runtime[DataAgent
     metric_column_ids: list[str] = [column_id
                                     for val in retrieved_metrics
                                     for column_id in val.relevant_columns or []]
+    value_column_ids: list[str] = [val.column_id for val in retrieved_values]
     column_infos: Sequence[ColumnInfoMySQL] \
         = await meta_repository.get_columns_by_ids(
         list(set(
-            list(map_column_id2obj.keys()) + metric_column_ids
+            list(map_column_id2obj.keys()) + metric_column_ids + value_column_ids
         ))
     )
     map_column_id2sqlObj = {val.id: val for val in column_infos}
@@ -57,9 +58,15 @@ async def merge_retrieved_info(state: DataAgentState, runtime: Runtime[DataAgent
         else:
             # 4.1 查询:列信息
             column_info: ColumnInfoMySQL = map_column_id2sqlObj.get(column_id)
+            if column_info is None:
+                logger.warning(f"[合并召回] column_id={column_id} 在元数据中未找到，跳过该值")
+                continue
             # 4.2 值:不存在列的示例:插入
-            if value not in column_info.examples:
-                column_info.examples.append(value)
+            if value not in (column_info.examples or []):
+                if column_info.examples is None:
+                    column_info.examples = [value]
+                else:
+                    column_info.examples.append(value)
             # 4.3 列:转化并插入
             map_column_id2obj[column_id] = ColumnInfoQdrant.model_validate(column_info)
 
