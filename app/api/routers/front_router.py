@@ -26,3 +26,12 @@ async def chat_page():
     if os.path.exists(html_path):
         return FileResponse(html_path)
     return {"error": "Frontend file not found", "path": html_path}
+
+
+@frontend_router.get("/topbar.js")
+async def topbar_js():
+    """返回共享顶部栏脚本"""
+    js_path = os.path.join(FRONTEND_DIR, "topbar.js")
+    if os.path.exists(js_path):
+        return FileResponse(js_path, media_type="application/javascript")
+    return {"error": "Frontend file not found", "path": js_path}
