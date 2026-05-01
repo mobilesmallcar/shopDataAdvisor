@@ -1,4 +1,13 @@
 .venv
 .idea
-docker
 logs
+
+# Docker 运行时数据（不提交）
+docker/**/data/
+
+# Docker 大体积二进制文件
+docker/elasticsearch/plugins/*.zip
+
+# 词嵌入模型目录（可能几十MB~GB）
+docker/embedding/*
+!docker/embedding/.gitkeep

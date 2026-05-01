@@ -1,0 +1,31 @@
+# Git
+.git/
+.gitignore
+
+# IDE
+.idea/
+.vscode/
+
+# Python 缓存
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.ruff_cache/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 注意：不忽略 .venv，因为需要通过 COPY 复制到容器内
+# .venv/
+
+# 日志与临时文件
+logs/
+*.log
+
+# 其他
+images/
